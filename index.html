@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grow A Garden 2 - Supabase Monitor</title>
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; font-family: sans-serif; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #3ecf8e; } /* Warna hijau khas Supabase */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 20px; }
+        .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px; }
+        .username { font-weight: bold; color: #3ecf8e; }
+        .sheckles { color: #ffd700; font-weight: bold; margin: 10px 0; }
+        .inventory { background: #0d1117; padding: 10px; border-radius: 5px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Grow A Garden 2 - Live Supabase Monitor</h1>
+        <div id="status">Menghubungkan ke database...</div>
+        <div class="grid" id="accounts-grid"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://xyzabc.supabase.co"; // Ganti dengan URL Supabase Anda
+        const SUPABASE_KEY = "TOKEN_ANON_KEY_PANJANG_ANDA_DISINI"; // Ganti dengan anon key Anda
+
+        async function fetchLiveAccounts() {
+            try {
+                // Menarik data langsung dari tabel database Supabase Anda
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/accounts?select=*`, {
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                const data = await response.json();
+                
+                const grid = document.getElementById('accounts-grid');
+                const status = document.getElementById('status');
+                grid.innerHTML = '';
+
+                if (data.length === 0) {
+                    status.innerText = "Tidak ada akun terdaftar. Jalankan script Roblox Anda terlebih dahulu!";
+                    return;
+                }
+                status.style.display = 'none';
+
+                data.forEach(acc => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    
+                    let invHtml = '';
+                    if (acc.inventory) {
+                        for (const [item, qty] of Object.entries(acc.inventory)) {
+                            invHtml += `<div>• ${item.replace(/_/g, ' ')}: <strong>${qty}</strong></div>`;
+                        }
+                    }
+
+                    const lastTime = new Date(acc.updated_at).toLocaleTimeString('id-ID');
+
+                    card.innerHTML = `
+                        <div class="username">👤 ${acc.username}</div>
+                        <div class="sheckles">💰 ${Number(acc.sheckles).toLocaleString('id-ID')} Sheckles</div>
+                        <div class="inventory">
+                            <strong>Inventory:</strong>
+                            ${invHtml || '<div>Kosong</div>'}
+                        </div>
+                        <div style="font-size: 0.8em; color: #8b949e; margin-top: 10px; text-align: right;">
+                            Sync: ${lastTime}
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Auto update data dashboard setiap 5 detik
+        fetchLiveAccounts();
+        setInterval(fetchLiveAccounts, 5000);
+    </script>
+</body>
+</html>
