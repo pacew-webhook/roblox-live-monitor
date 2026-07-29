@@ -35,7 +35,6 @@
             align-items: center;
             border: 1px solid #2d3748;
         }
-        /* Style untuk Section Target Username */
         .target-section {
             background: #1e2640;
             padding: 12px;
@@ -139,7 +138,6 @@
             background: #991b1b;
             color: #fff;
         }
-
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -213,72 +211,28 @@
     const BIN_ID = "6a6a3b9ff5f4af5e29d235de";
     const API_KEY = "$2a$10$ap1SNJRB2ssxoZgyZpzZHecTkYxsSNtk7ipBxo6WjTCGYtjsUugyC";
 
-    // Contoh data sementara untuk list target (bisa disesuaikan dengan penyimpanan lokal/JSONBin)
-    let targetUsers = ["mozenian", "sayangniaa"];
-
-    function renderTargets() {
-        const listContainer = document.getElementById("target-list");
-        listContainer.innerHTML = "";
-
-        targetUsers.forEach((username, index) => {
-            const item = document.createElement("div");
-            item.className = "target-item";
-            
-            // Menggunakan thumbnail avatar avatar Roblox otomatis berdasarkan username
-            const avatarUrl = `https://tr.rbxcdn.com/30DAY-AvatarHeadshot-${username}-Png/150/150/Image/Png/noFilter`;
-
-            item.innerHTML = `
-                <div class="target-user-info">
-                    <div class="target-badge">${index + 1}</div>
-                    <img src="https://www.roblox.com/headshot-thumbnail/image?userId=1&width=420&height=420&format=png" class="target-avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
-                    <span class="target-username">${username}</span>
-                </div>
-                <button class="delete-btn" onclick="removeUsername(${index})">HAPUS</button>
-            `;
-            listContainer.appendChild(item);
-        });
-    }
-
-    function addUsername() {
-        const input = document.getElementById("username-input");
-        const val = input.value.trim();
-        if (val && !targetUsers.includes(val)) {
-            targetUsers.push(val);
-            input.value = "";
-            renderTargets();
-        }
-    }
-
-    function removeUsername(index) {
-        targetUsers.splice(index, 1);
-        renderTargets();
-    }
-
-    // Event listener untuk tombol Enter pada input
-    document.getElementById("username-input").addEventListener("keypress", function(e) {
-        if (e.key === 'Enter') {
-            addUsername();
-        }
-    });
+    let globalData = { player: "", items: {}, targets: [] };
 
     async function fetchData() {
         try {
             const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                headers: {
-                    "X-Master-Key": API_KEY
-                }
+                headers: { "X-Master-Key": API_KEY }
             });
             const result = await response.json();
-            const data = result.record;
+            globalData = result.record;
 
-            document.getElementById("player-name").innerText = "Player: " + (data.player || "Unknown");
+            document.getElementById("player-name").innerText = "Player: " + (globalData.player || "Unknown");
             document.getElementById("last-update").innerText = "Update: " + new Date().toLocaleTimeString();
 
+            // Render Target Usernames dari Database
+            renderTargets();
+
+            // Render Items Inventory
             const grid = document.getElementById("item-grid");
             grid.innerHTML = "";
 
             let count = 0;
-            for (const [itemName, qty] of Object.entries(data.items || {})) {
+            for (const [itemName, qty] of Object.entries(globalData.items || {})) {
                 count++;
                 const card = document.createElement("div");
                 card.className = "card";
@@ -299,8 +253,70 @@
         }
     }
 
-    // Inisialisasi awal render target list
-    renderTargets();
+    async function updateCloudData() {
+        try {
+            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Master-Key": API_KEY
+                },
+                body: JSON.stringify(globalData)
+            });
+        } catch (error) {
+            console.error("Gagal memperbarui data ke cloud:", error);
+        }
+    }
+
+    function renderTargets() {
+        const listContainer = document.getElementById("target-list");
+        listContainer.innerHTML = "";
+
+        if (!globalData.targets) globalData.targets = [];
+
+        globalData.targets.forEach((username, index) => {
+            const item = document.createElement("div");
+            item.className = "target-item";
+            
+            item.innerHTML = `
+                <div class="target-user-info">
+                    <div class="target-badge">${index + 1}</div>
+                    <img src="https://www.roblox.com/headshot-thumbnail/image?userId=1&width=420&height=420&format=png" class="target-avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+                    <span class="target-username">${username}</span>
+                </div>
+                <button class="delete-btn" onclick="removeUsername(${index})">HAPUS</button>
+            `;
+            listContainer.appendChild(item);
+        });
+    }
+
+    async function addUsername() {
+        const input = document.getElementById("username-input");
+        const val = input.value.trim();
+        if (val) {
+            if (!globalData.targets) globalData.targets = [];
+            if (!globalData.targets.includes(val)) {
+                globalData.targets.push(val);
+                input.value = "";
+                renderTargets();
+                await updateCloudData(); // Simpan perubahan ke JSONBin
+            }
+        }
+    }
+
+    async function removeUsername(index) {
+        if (globalData.targets) {
+            globalData.targets.splice(index, 1);
+            renderTargets();
+            await updateCloudData(); // Simpan perubahan ke JSONBin
+        }
+    }
+
+    document.getElementById("username-input").addEventListener("keypress", function(e) {
+        if (e.key === 'Enter') {
+            addUsername();
+        }
+    });
 
     setInterval(fetchData, 5000);
     fetchData();
