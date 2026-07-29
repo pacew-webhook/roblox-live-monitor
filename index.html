@@ -3,84 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grow A Garden 2 - Supabase Monitor</title>
+    <title>Grow A Garden 2 - Live Monitoring</title>
     <style>
-        body { background-color: #0d1117; color: #c9d1d9; font-family: sans-serif; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        h1 { color: #3ecf8e; } /* Warna hijau khas Supabase */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 20px; }
-        .card { background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 15px; }
-        .username { font-weight: bold; color: #3ecf8e; }
-        .sheckles { color: #ffd700; font-weight: bold; margin: 10px 0; }
-        .inventory { background: #0d1117; padding: 10px; border-radius: 5px; font-size: 0.9em; }
+        body {
+            background-color: #0f121e;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #161b2e;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #2d3748;
+        }
+        h2 { color: #4ade80; margin-top: 0; }
+        .stats {
+            background: #1e2640;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .card {
+            background: #1e2640;
+            border: 1px solid #2d3748;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .item-name { font-weight: bold; font-size: 14px; color: #e2e8f0; }
+        .item-count { background: #143324; color: #4ade80; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🌱 Grow A Garden 2 - Live Supabase Monitor</h1>
-        <div id="status">Menghubungkan ke database...</div>
-        <div class="grid" id="accounts-grid"></div>
+
+<div class="container">
+    <h2>🌱 Grow A Garden 2 - Live Dashboard</h2>
+    <div class="stats">
+        <div>
+            <span id="player-name" style="font-weight: bold; color: #60a5fa;">Memuat Player...</span><br>
+            <small style="color: #94a3b8;" id="last-update">Status: Menghubungkan...</small>
+        </div>
+        <div style="color: #4ade80; font-weight: bold;" id="total-types">0 Jenis Item</div>
     </div>
 
-    <script>
-        const SUPABASE_URL = "https://tdsmpljtlzjduwazfmsr.supabase.co/rest/v1/"; // Ganti dengan URL Supabase Anda
-        const SUPABASE_KEY = "sb_publishable_AQ_2iSsslDKZiM-la54DGw_-RQ7AFm6"; // Ganti dengan anon key Anda
+    <div class="grid" id="item-grid">
+        <!-- Item akan dimuat otomatis di sini -->
+    </div>
+</div>
 
-        async function fetchLiveAccounts() {
-            try {
-                // Menarik data langsung dari tabel database Supabase Anda
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/accounts?select=*`, {
-                    headers: {
-                        "apikey": SUPABASE_KEY,
-                        "Authorization": `Bearer ${SUPABASE_KEY}`
-                    }
-                });
-                const data = await response.json();
-                
-                const grid = document.getElementById('accounts-grid');
-                const status = document.getElementById('status');
-                grid.innerHTML = '';
+<script>
+    const BIN_ID = "MASUKKAN_BIN_ID_ANDA_DISINI";
+    const API_KEY = "MASUKKAN_MASTER_KEY_ANDA_DISINI"; // Opsional jika bin diset public
 
-                if (data.length === 0) {
-                    status.innerText = "Tidak ada akun terdaftar. Jalankan script Roblox Anda terlebih dahulu!";
-                    return;
+    async function fetchData() {
+        try {
+            const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                headers: {
+                    ["X-Master-Key"]: API_KEY
                 }
-                status.style.display = 'none';
+            });
+            const result = await response.json();
+            const data = result.record;
 
-                data.forEach(acc => {
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    
-                    let invHtml = '';
-                    if (acc.inventory) {
-                        for (const [item, qty] of Object.entries(acc.inventory)) {
-                            invHtml += `<div>• ${item.replace(/_/g, ' ')}: <strong>${qty}</strong></div>`;
-                        }
-                    }
+            // Update informasi player & waktu
+            document.getElementById("player-name").innerText = "Player: " + data.player;
+            document.getElementById("last-update").innerText = "Terakhir Diperbarui: " + new Date().toLocaleTimeString();
 
-                    const lastTime = new Date(acc.updated_at).toLocaleTimeString('id-ID');
+            const grid = document.getElementById("item-grid");
+            grid.innerHTML = "";
 
-                    card.innerHTML = `
-                        <div class="username">👤 ${acc.username}</div>
-                        <div class="sheckles">💰 ${Number(acc.sheckles).toLocaleString('id-ID')} Sheckles</div>
-                        <div class="inventory">
-                            <strong>Inventory:</strong>
-                            ${invHtml || '<div>Kosong</div>'}
-                        </div>
-                        <div style="font-size: 0.8em; color: #8b949e; margin-top: 10px; text-align: right;">
-                            Sync: ${lastTime}
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                });
-            } catch (err) {
-                console.error(err);
+            let count = 0;
+            for [itemName, qty] of Object.entries(data.items)) {
+                count++;
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+                    <span class="item-name">🌿 ${itemName}</span>
+                    <span class="item-count">x${qty}</span>
+                `;
+                grid.appendChild(card);
             }
-        }
+            document.getElementById("total-types").innerText = count + " Jenis Item";
 
-        // Auto update data dashboard setiap 5 detik
-        fetchLiveAccounts();
-        setInterval(fetchLiveAccounts, 5000);
-    </script>
+        } catch (error) {
+            console.error("Gagal memuat data:", error);
+            document.getElementById("last-update").innerText = "Status: Gagal mengambil data web.";
+        }
+    }
+
+    // Refresh data web secara otomatis setiap 5 detik
+    setInterval(fetchData, 5000);
+    fetchData();
+</script>
+
 </body>
 </html>
