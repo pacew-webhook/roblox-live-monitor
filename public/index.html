@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grow A Garden 2 - Live Monitoring</title>
+    <title>Grow A Garden 2 - Live Dashboard</title>
     <style>
         body {
             background-color: #0f121e;
@@ -13,14 +13,21 @@
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 850px;
             margin: 0 auto;
             background: #161b2e;
             padding: 20px;
             border-radius: 12px;
             border: 1px solid #2d3748;
         }
-        h2 { color: #4ade80; margin-top: 0; }
+        h2 { 
+            color: #4ade80; 
+            margin-top: 0; 
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .stats {
             background: #1e2640;
             padding: 15px;
@@ -29,10 +36,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid #2d3748;
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 12px;
         }
         .card {
@@ -44,56 +52,81 @@
             justify-content: space-between;
             align-items: center;
         }
-        .item-name { font-weight: bold; font-size: 14px; color: #e2e8f0; }
-        .item-count { background: #143324; color: #4ade80; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .item-name { 
+            font-weight: bold; 
+            font-size: 13px; 
+            color: #e2e8f0; 
+        }
+        .item-sub {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        .item-count { 
+            background: #143324; 
+            color: #4ade80; 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            font-size: 12px;
+            border: 1px solid #1e5638;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>🌱 Grow A Garden 2 - Live Dashboard</h2>
+    
     <div class="stats">
         <div>
-            <span id="player-name" style="font-weight: bold; color: #60a5fa;">Memuat Player...</span><br>
+            <span id="player-name" style="font-weight: bold; color: #60a5fa; font-size: 14px;">Memuat Player...</span><br>
             <small style="color: #94a3b8;" id="last-update">Status: Menghubungkan...</small>
         </div>
-        <div style="color: #4ade80; font-weight: bold;" id="total-types">0 Jenis Item</div>
+        <div style="color: #4ade80; font-weight: bold; font-size: 14px;" id="total-types">0 Jenis Item</div>
     </div>
 
     <div class="grid" id="item-grid">
-        <!-- Item akan dimuat otomatis di sini -->
+        <!-- Item inventory akan muncul otomatis di sini -->
     </div>
 </div>
 
 <script>
     const BIN_ID = "6a6a3b9ff5f4af5e29d235de";
-    const API_KEY =
-"$2a$10$ap1SNJRB2ssxoZgyZpzZHecTkYxsSNtk7ipBxo6WjTCGYtjsUugyC"; // Opsional jika bin diset public
+    const API_KEY = "$2a$10$ap1SNJRB2ssxoZgyZpzZHecTkYxsSNtk7ipBxo6WjTCGYtjsUugyC"; // Kosongkan "" jika bin di-set public
 
     async function fetchData() {
         try {
             const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
                 headers: {
-                    ["X-Master-Key"]: API_KEY
+                    "X-Master-Key": API_KEY
                 }
             });
             const result = await response.json();
             const data = result.record;
 
-            // Update informasi player & waktu
-            document.getElementById("player-name").innerText = "Player: " + data.player;
+            // Perbarui teks informasi player dan waktu update
+            document.getElementById("player-name").innerText = "Player: " + (data.player || "Unknown");
             document.getElementById("last-update").innerText = "Terakhir Diperbarui: " + new Date().toLocaleTimeString();
 
             const grid = document.getElementById("item-grid");
             grid.innerHTML = "";
 
             let count = 0;
-            for [itemName, qty] of Object.entries(data.items)) {
+            // Looping data item dari database
+            for (const [itemName, qty] of Object.entries(data.items || {})) {
                 count++;
                 const card = document.createElement("div");
                 card.className = "card";
                 card.innerHTML = `
-                    <span class="item-name">🌿 ${itemName}</span>
+                    <div class="item-info">
+                        <span class="item-name">🌿 ${itemName}</span>
+                        <span class="item-sub">Total Farm: item</span>
+                    </div>
                     <span class="item-count">x${qty}</span>
                 `;
                 grid.appendChild(card);
@@ -106,7 +139,7 @@
         }
     }
 
-    // Refresh data web secara otomatis setiap 5 detik
+    // Refresh data otomatis setiap 5 detik
     setInterval(fetchData, 5000);
     fetchData();
 </script>
