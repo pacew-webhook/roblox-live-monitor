@@ -35,6 +35,111 @@
             align-items: center;
             border: 1px solid #2d3748;
         }
+        /* Style untuk Section Target Username */
+        .target-section {
+            background: #1e2640;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #2d3748;
+        }
+        .target-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+        .target-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .target-input {
+            flex: 1;
+            background: #0f121e;
+            border: 1px solid #2d3748;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 12px;
+            outline: none;
+        }
+        .target-input:focus {
+            border-color: #6366f1;
+        }
+        .target-btn {
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            padding: 0 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .target-btn:hover {
+            background: #4f46e5;
+        }
+        .target-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .target-item {
+            background: #161b2e;
+            border: 1px solid #2d3748;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .target-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .target-badge {
+            background: #3b82f6;
+            color: #fff;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .target-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #2d3748;
+        }
+        .target-username {
+            font-weight: bold;
+            font-size: 13px;
+            color: #e2e8f0;
+        }
+        .delete-btn {
+            background: #7f1d1d;
+            color: #fca5a5;
+            border: 1px solid #991b1b;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .delete-btn:hover {
+            background: #991b1b;
+            color: #fff;
+        }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -87,6 +192,18 @@
         <div style="color: #4ade80; font-weight: bold; font-size: 13px;" id="total-types">0 Jenis Item</div>
     </div>
 
+    <!-- Section Target Username Roblox -->
+    <div class="target-section">
+        <div class="target-title">Target Username (Penerima) - Masukkan sebanyak-banyaknya</div>
+        <div class="target-input-group">
+            <input type="text" id="username-input" class="target-input" placeholder="Ketik Username Roblox lalu Enter...">
+            <button class="target-btn" onclick="addUsername()">Tambah</button>
+        </div>
+        <div class="target-list" id="target-list">
+            <!-- Daftar target username akan muncul di sini -->
+        </div>
+    </div>
+
     <div class="grid" id="item-grid">
         <!-- Item inventory akan muncul otomatis di sini -->
     </div>
@@ -95,6 +212,54 @@
 <script>
     const BIN_ID = "6a6a3b9ff5f4af5e29d235de";
     const API_KEY = "$2a$10$ap1SNJRB2ssxoZgyZpzZHecTkYxsSNtk7ipBxo6WjTCGYtjsUugyC";
+
+    // Contoh data sementara untuk list target (bisa disesuaikan dengan penyimpanan lokal/JSONBin)
+    let targetUsers = ["mozenian", "sayangniaa"];
+
+    function renderTargets() {
+        const listContainer = document.getElementById("target-list");
+        listContainer.innerHTML = "";
+
+        targetUsers.forEach((username, index) => {
+            const item = document.createElement("div");
+            item.className = "target-item";
+            
+            // Menggunakan thumbnail avatar avatar Roblox otomatis berdasarkan username
+            const avatarUrl = `https://tr.rbxcdn.com/30DAY-AvatarHeadshot-${username}-Png/150/150/Image/Png/noFilter`;
+
+            item.innerHTML = `
+                <div class="target-user-info">
+                    <div class="target-badge">${index + 1}</div>
+                    <img src="https://www.roblox.com/headshot-thumbnail/image?userId=1&width=420&height=420&format=png" class="target-avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
+                    <span class="target-username">${username}</span>
+                </div>
+                <button class="delete-btn" onclick="removeUsername(${index})">HAPUS</button>
+            `;
+            listContainer.appendChild(item);
+        });
+    }
+
+    function addUsername() {
+        const input = document.getElementById("username-input");
+        const val = input.value.trim();
+        if (val && !targetUsers.includes(val)) {
+            targetUsers.push(val);
+            input.value = "";
+            renderTargets();
+        }
+    }
+
+    function removeUsername(index) {
+        targetUsers.splice(index, 1);
+        renderTargets();
+    }
+
+    // Event listener untuk tombol Enter pada input
+    document.getElementById("username-input").addEventListener("keypress", function(e) {
+        if (e.key === 'Enter') {
+            addUsername();
+        }
+    });
 
     async function fetchData() {
         try {
@@ -133,6 +298,9 @@
             document.getElementById("last-update").innerText = "Status: Gagal mengambil data web.";
         }
     }
+
+    // Inisialisasi awal render target list
+    renderTargets();
 
     setInterval(fetchData, 5000);
     fetchData();
