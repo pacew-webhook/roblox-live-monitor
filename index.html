@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grow A Garden 2 - Live Dashboard</title>
+    <title>Grow A Garden 2 - Live Dashboard & Scripts</title>
     <style>
         body {
             background-color: #0f121e;
@@ -20,11 +20,39 @@
             border-radius: 12px;
             border: 1px solid #2d3748;
         }
-        h2 { 
-            color: #4ade80; 
-            margin-top: 0; 
-            font-size: 17px;
+        
+        /* --- NAVIGASI TAB --- */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #2d3748;
+            padding-bottom: 10px;
         }
+        .tab-btn {
+            background: #1e2640;
+            color: #94a3b8;
+            border: 1px solid #2d3748;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: #6366f1;
+            color: #fff;
+            border-color: #6366f1;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        h2 { color: #4ade80; margin-top: 0; font-size: 17px; }
         .stats {
             background: #1e2640;
             padding: 12px;
@@ -36,7 +64,7 @@
             border: 1px solid #2d3748;
         }
 
-        /* --- DEVICE & GAME METRICS SECTION --- */
+        /* --- DEVICE & GAME METRICS --- */
         .device-section {
             background: #1e2640;
             border: 1px solid #2d3748;
@@ -68,7 +96,6 @@
             font-size: 11px;
             border: 1px solid #1e5638;
         }
-        
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -82,293 +109,197 @@
             border-radius: 6px;
             text-align: center;
         }
-        .metric-label {
-            font-size: 10px;
-            color: #94a3b8;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-        }
-        .metric-value {
-            font-size: 16px;
-            font-weight: bold;
-            color: #4ade80;
-        }
+        .metric-label { font-size: 10px; color: #94a3b8; margin-bottom: 4px; text-transform: uppercase; }
+        .metric-value { font-size: 16px; font-weight: bold; color: #4ade80; }
         .metric-value.fps { color: #38bdf8; }
         .metric-value.ping { color: #facc15; }
         .metric-value.items { color: #c084fc; }
 
-        .packages-title {
-            font-size: 12px;
-            font-weight: bold;
-            color: #94a3b8;
-            margin-bottom: 8px;
-        }
-        .table-container {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 12px;
-        }
-        th, td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #2d3748;
-        }
-        th {
-            color: #94a3b8;
-            font-weight: 600;
-            background: #161b2e;
-        }
-        tr:hover {
-            background: #161b2e;
-        }
+        .packages-title { font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #2d3748; }
+        th { color: #94a3b8; font-weight: 600; background: #161b2e; }
         .status-ingame {
-            background: #143324;
-            color: #4ade80;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-            border: 1px solid #1e5638;
-            display: inline-block;
+            background: #143324; color: #4ade80; padding: 2px 6px;
+            border-radius: 4px; font-size: 10px; font-weight: bold;
+            border: 1px solid #1e5638; display: inline-block;
         }
-        .account-info {
-            display: flex;
-            flex-direction: column;
-        }
-        .account-name {
-            font-weight: bold;
-            color: #e2e8f0;
-        }
-        .account-time {
-            font-size: 9px;
-            color: #94a3b8;
-        }
+        .account-info { display: flex; flex-direction: column; }
+        .account-name { font-weight: bold; color: #e2e8f0; }
+        .account-time { font-size: 9px; color: #94a3b8; }
 
         /* --- TARGET USERNAME SECTION --- */
         .target-section {
-            background: #1e2640;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #2d3748;
+            background: #1e2640; padding: 12px; border-radius: 8px;
+            margin-bottom: 15px; border: 1px solid #2d3748;
         }
-        .target-title {
-            font-size: 12px;
-            font-weight: bold;
-            color: #94a3b8;
-            margin-bottom: 8px;
-        }
-        .target-input-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
+        .target-title { font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; }
+        .target-input-group { display: flex; gap: 8px; margin-bottom: 12px; }
         .target-input {
-            flex: 1;
-            background: #0f121e;
-            border: 1px solid #2d3748;
-            padding: 8px 12px;
-            border-radius: 6px;
-            color: #fff;
-            font-size: 12px;
-            outline: none;
-        }
-        .target-input:focus {
-            border-color: #6366f1;
+            flex: 1; background: #0f121e; border: 1px solid #2d3748;
+            padding: 8px 12px; border-radius: 6px; color: #fff; font-size: 12px; outline: none;
         }
         .target-btn {
-            background: #6366f1;
-            color: #fff;
-            border: none;
-            padding: 0 16px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
+            background: #6366f1; color: #fff; border: none; padding: 0 16px;
+            border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;
         }
-        .target-btn:hover {
-            background: #4f46e5;
-        }
-        .target-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        .target-btn:hover { background: #4f46e5; }
+        .target-list { display: flex; flex-direction: column; gap: 8px; }
         .target-item {
-            background: #161b2e;
-            border: 1px solid #2d3748;
-            padding: 8px 12px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: #161b2e; border: 1px solid #2d3748; padding: 8px 12px;
+            border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
         }
-        .target-user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .target-user-info { display: flex; align-items: center; gap: 10px; }
         .target-badge {
-            background: #3b82f6;
-            color: #fff;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: bold;
+            background: #3b82f6; color: #fff; width: 22px; height: 22px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;
         }
-        .target-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            object-fit: cover;
-            background: #2d3748;
-        }
-        .target-username {
-            font-weight: bold;
-            font-size: 13px;
-            color: #e2e8f0;
-        }
+        .target-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #2d3748; }
+        .target-username { font-weight: bold; font-size: 13px; color: #e2e8f0; }
         .delete-btn {
-            background: #7f1d1d;
-            color: #fca5a5;
-            border: 1px solid #991b1b;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .delete-btn:hover {
-            background: #991b1b;
-            color: #fff;
+            background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b;
+            padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;
         }
 
         /* --- INVENTORY GRID --- */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 10px;
-        }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
         .card {
-            background: #1e2640;
-            border: 1px solid #2d3748;
-            padding: 10px 12px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: #1e2640; border: 1px solid #2d3748; padding: 10px 12px;
+            border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
         }
-        .item-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
+        .item-info { display: flex; flex-direction: column; gap: 2px; }
+        .item-name { font-weight: bold; font-size: 13px; color: #e2e8f0; }
+        .item-sub { font-size: 10px; color: #94a3b8; }
+        .item-count {
+            background: #143324; color: #4ade80; padding: 4px 8px;
+            border-radius: 6px; font-weight: bold; font-size: 12px; border: 1px solid #1e5638;
         }
-        .item-name { 
-            font-weight: bold; 
-            font-size: 13px; 
-            color: #e2e8f0; 
+
+        /* --- STYLING TAB SCRIPTS --- */
+        .script-box {
+            background: #1e2640; border: 1px solid #2d3748; border-radius: 8px; padding: 15px;
         }
-        .item-sub {
-            font-size: 10px;
-            color: #94a3b8;
+        .script-textarea {
+            width: 100%; height: 180px; background: #0f121e; border: 1px solid #2d3748;
+            color: #4ade80; font-family: monospace; padding: 10px; border-radius: 6px;
+            font-size: 12px; resize: vertical; outline: none; box-sizing: border-box;
         }
-        .item-count { 
-            background: #143324; 
-            color: #4ade80; 
-            padding: 4px 8px; 
-            border-radius: 6px; 
-            font-weight: bold; 
-            font-size: 12px;
-            border: 1px solid #1e5638;
+        .execute-btn {
+            background: #22c55e; color: #0f121e; border: none; padding: 10px 20px;
+            border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 10px;
+        }
+        .execute-btn:hover { background: #16a34a; color: #fff; }
+        .execution-log {
+            margin-top: 15px; background: #0f121e; border: 1px solid #2d3748;
+            padding: 10px; border-radius: 6px; font-family: monospace; font-size: 11px; color: #38bdf8;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🌱 Grow A Garden 2 - Live Dashboard</h2>
+    <h2>🌱 Grow A Garden 2 - Web Control Center</h2>
     
-    <div class="stats">
-        <div>
-            <span id="player-name" style="font-weight: bold; color: #60a5fa; font-size: 13px;">Memuat Player...</span><br>
-            <small style="color: #94a3b8; font-size: 11px;" id="last-update">Status: Menghubungkan...</small>
-        </div>
-        <div style="color: #4ade80; font-weight: bold; font-size: 13px;" id="total-types">0 Jenis Item</div>
+    <!-- Tab Navigasi -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+        <button class="tab-btn" onclick="switchTab('scripts')">Scripts Hub</button>
     </div>
 
-    <!-- DEVICE & GAME METRICS REAL-TIME -->
-    <div class="device-section">
-        <div class="device-header">
-            <div class="device-title">
-                <span>VIP Session (Delta)</span>
-                <span class="online-badge">● Online</span>
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content active">
+        <div class="stats">
+            <div>
+                <span id="player-name" style="font-weight: bold; color: #60a5fa; font-size: 13px;">Memuat Player...</span><br>
+                <small style="color: #94a3b8; font-size: 11px;" id="last-update">Status: Menghubungkan...</small>
+            </div>
+            <div style="color: #4ade80; font-weight: bold; font-size: 13px;" id="total-types">0 Jenis Item</div>
+        </div>
+
+        <div class="device-section">
+            <div class="device-header">
+                <div class="device-title">
+                    <span>VIP Session (Delta)</span>
+                    <span class="online-badge">● Online</span>
+                </div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Performa FPS</div>
+                    <div class="metric-value fps" id="metric-fps">60 FPS</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Koneksi Ping</div>
+                    <div class="metric-value ping" id="metric-ping">45 ms</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Jenis Item</div>
+                    <div class="metric-value items" id="metric-items">0 Item</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Status Sesi</div>
+                    <div class="metric-value" style="color: #34d399; font-size: 13px; padding-top: 3px;">Terhubung</div>
+                </div>
+            </div>
+
+            <div class="packages-title">Akun Roblox Aktif</div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 35%;">Client ID</th>
+                            <th style="width: 40%;">Akun</th>
+                            <th style="width: 25%;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="device-table-body"></tbody>
+                </table>
             </div>
         </div>
 
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-label">Performa FPS</div>
-                <div class="metric-value fps" id="metric-fps">60 FPS</div>
+        <div class="target-section">
+            <div class="target-title">Target Username (Penerima) - Masukkan sebanyak-banyaknya</div>
+            <div class="target-input-group">
+                <input type="text" id="username-input" class="target-input" placeholder="Ketik Username Roblox lalu Enter...">
+                <button class="target-btn" onclick="addUsername()">Tambah</button>
             </div>
-            <div class="metric-card">
-                <div class="metric-label">Koneksi Ping</div>
-                <div class="metric-value ping" id="metric-ping">45 ms</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Total Jenis Item</div>
-                <div class="metric-value items" id="metric-items">0 Item</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Status Sesi</div>
-                <div class="metric-value" style="color: #34d399; font-size: 13px; padding-top: 3px;">Terhubung</div>
-            </div>
+            <div class="target-list" id="target-list"></div>
         </div>
 
-        <div class="packages-title">Akun Roblox Aktif</div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 35%;">Client ID</th>
-                        <th style="width: 40%;">Akun</th>
-                        <th style="width: 25%;">Status</th>
-                    </tr>
-                </thead>
-                <tbody id="device-table-body">
-                    <!-- Data perangkat online diisi otomatis -->
-                </tbody>
-            </table>
-        </div>
+        <div class="grid" id="item-grid"></div>
     </div>
 
-    <!-- TARGET USERNAME SECTION -->
-    <div class="target-section">
-        <div class="target-title">Target Username (Penerima) - Masukkan sebanyak-banyaknya</div>
-        <div class="target-input-group">
-            <input type="text" id="username-input" class="target-input" placeholder="Ketik Username Roblox lalu Enter...">
-            <button class="target-btn" onclick="addUsername()">Tambah</button>
+    <!-- TAB 2: SCRIPTS HUB (REMOTE EXECUTE) -->
+    <div id="tab-scripts" class="tab-content">
+        <div class="script-box">
+            <div class="target-title" style="margin-bottom: 10px;">Remote Execute Script ke Delta (In-Game)</div>
+            <textarea id="script-input" class="script-textarea" placeholder="Tulis script Luau di sini...&#10;Contoh: print('Halo dari Web!')"></textarea>
+            <button class="execute-btn" onclick="sendScriptToGame()">🚀 Execute ke Delta</button>
+            <div class="execution-log" id="execution-log">Status: Menunggu perintah script dikirim...</div>
         </div>
-        <div class="target-list" id="target-list"></div>
     </div>
-
-    <!-- INVENTORY GRID -->
-    <div class="grid" id="item-grid"></div>
 </div>
 
 <script>
     const BIN_ID = "6a6a3b9ff5f4af5e29d235de";
     const API_KEY = "$2a$10$ap1SNJRB2ssxoZgyZpzZHecTkYxsSNtk7ipBxo6WjTCGYtjsUugyC";
 
-    let globalData = { player: "", items: {}, targets: [], devices: [] };
+    let globalData = { player: "", items: {}, targets: [], devices: [], metrics: {}, remoteScript: "" };
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        if (tabName === 'dashboard') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('tab-dashboard').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('tab-scripts').classList.add('active');
+        }
+    }
 
     async function fetchData() {
         try {
@@ -381,7 +312,6 @@
             document.getElementById("player-name").innerText = "Player Utama: " + (globalData.player || "Unknown");
             document.getElementById("last-update").innerText = "Update: " + new Date().toLocaleTimeString();
 
-            // Update Metrik Realtime dari Game
             if (globalData.metrics) {
                 document.getElementById("metric-fps").innerText = (globalData.metrics.fps || 60) + " FPS";
                 document.getElementById("metric-ping").innerText = (globalData.metrics.ping || 50) + " ms";
@@ -412,7 +342,6 @@
 
         } catch (error) {
             console.error("Gagal memuat data:", error);
-            document.getElementById("last-update").innerText = "Status: Gagal mengambil data web.";
         }
     }
 
@@ -429,6 +358,17 @@
         } catch (error) {
             console.error("Gagal memperbarui data ke cloud:", error);
         }
+    }
+
+    async function sendScriptToGame() {
+        const scriptText = document.getElementById("script-input").value.trim();
+        if (!scriptText) return;
+
+        globalData.remoteScript = scriptText;
+        document.getElementById("execution-log").innerText = "Status: Mengirim script ke cloud... Mohon tunggu di game.";
+        
+        await updateCloudData();
+        document.getElementById("execution-log").innerText = "Status: Script berhasil dikirim! Delta akan mengeksekusinya.";
     }
 
     function renderTargets() {
@@ -495,9 +435,7 @@
     }
 
     document.getElementById("username-input").addEventListener("keypress", function(e) {
-        if (e.key === 'Enter') {
-            addUsername();
-        }
+        if (e.key === 'Enter') addUsername();
     });
 
     setInterval(fetchData, 3000);
