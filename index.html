@@ -136,7 +136,6 @@
             width: 32px; height: 32px; background: #161b2e; border: 1px solid #2d3748;
             border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
         }
-        .item-icon-box img { width: 100%; height: 100%; object-fit: cover; }
         .item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden; }
         .item-name { font-weight: bold; font-size: 11px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .item-sub { font-size: 9px; color: #94a3b8; }
@@ -167,7 +166,6 @@
         <button class="tab-btn" onclick="switchTab('scripts')">Scripts Hub</button>
     </div>
 
-    <!-- TAB 1: DASHBOARD -->
     <div id="tab-dashboard" class="tab-content active">
         <div class="stats">
             <div>
@@ -236,7 +234,6 @@
         </div>
     </div>
 
-    <!-- TAB 2: SCRIPTS HUB -->
     <div id="tab-scripts" class="tab-content">
         <div class="script-box">
             <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Remote Execute Script ke Delta (In-Game)</div>
@@ -323,24 +320,13 @@
             }
             visibleCount++;
 
-            // Tangani format data lama (berupa angka langsung) vs format baru (objek {count, icon})
-            let qty = typeof itemData === 'object' ? itemData.count : itemData;
-            let rawIcon = typeof itemData === 'object' ? itemData.icon : "";
-
-            let iconHtml = '<span style="font-size: 14px;">🌱</span>';
-            if (rawIcon) {
-                // Konversi format asset ID Roblox menjadi URL gambar web
-                let assetId = rawIcon.replace(/[^0-9]/g, '');
-                if (assetId) {
-                    let imageUrl = `https://www.roblox.com/asset-thumbnail/image?assetId=${assetId}&width=420&height=420&format=png`;
-                    iconHtml = `<img src="${imageUrl}" onerror="this.parentElement.innerHTML='<span style=\'font-size: 14px;\'>🌱</span>'">`;
-                }
-            }
+            // Mencegah error [object Object] dengan memastikan pembacaan berupa angka
+            let qty = typeof itemData === 'object' && itemData !== null ? (itemData.count || 1) : itemData;
 
             const card = document.createElement("div");
             card.className = "card";
             card.innerHTML = `
-                <div class="item-icon-box">${iconHtml}</div>
+                <div class="item-icon-box"><span style="font-size: 14px;">🌱</span></div>
                 <div class="item-info">
                     <span class="item-name" title="${itemName}">${itemName}</span>
                     <span class="item-sub">Inventory</span>
