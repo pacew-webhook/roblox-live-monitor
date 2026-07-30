@@ -36,7 +36,7 @@
             border: 1px solid #2d3748;
         }
 
-        /* --- STYLING DEVICE METRICS & INSTALLED PACKAGES --- */
+        /* --- DEVICE & GAME METRICS SECTION --- */
         .device-section {
             background: #1e2640;
             border: 1px solid #2d3748;
@@ -69,7 +69,6 @@
             border: 1px solid #1e5638;
         }
         
-        /* Metric Cards Grid */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -94,11 +93,10 @@
             font-weight: bold;
             color: #4ade80;
         }
-        .metric-value.cpu { color: #38bdf8; }
-        .metric-value.ram-used { color: #facc15; }
-        .metric-value.ram-total { color: #c084fc; }
+        .metric-value.fps { color: #38bdf8; }
+        .metric-value.ping { color: #facc15; }
+        .metric-value.items { color: #c084fc; }
 
-        /* Installed Packages Table */
         .packages-title {
             font-size: 12px;
             font-weight: bold;
@@ -307,46 +305,46 @@
         <div style="color: #4ade80; font-weight: bold; font-size: 13px;" id="total-types">0 Jenis Item</div>
     </div>
 
-    <!-- DEVICE METRICS & INSTALLED PACKAGES SECTION (SESUAI GAMBAR) -->
+    <!-- DEVICE & GAME METRICS REAL-TIME -->
     <div class="device-section">
         <div class="device-header">
             <div class="device-title">
-                <span>VIP44</span>
+                <span>VIP Session (Delta)</span>
                 <span class="online-badge">● Online</span>
             </div>
         </div>
 
         <div class="metrics-grid">
             <div class="metric-card">
-                <div class="metric-label">Penggunaan CPU</div>
-                <div class="metric-value cpu" id="cpu-usage">46%</div>
+                <div class="metric-label">Performa FPS</div>
+                <div class="metric-value fps" id="metric-fps">60 FPS</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">RAM yang Digunakan</div>
-                <div class="metric-value ram-used" id="ram-used">2.9 GB</div>
+                <div class="metric-label">Koneksi Ping</div>
+                <div class="metric-value ping" id="metric-ping">45 ms</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">RAM Gratis</div>
-                <div class="metric-value" id="ram-free">1.0 GB</div>
+                <div class="metric-label">Total Jenis Item</div>
+                <div class="metric-value items" id="metric-items">0 Item</div>
             </div>
             <div class="metric-card">
-                <div class="metric-label">Total RAM</div>
-                <div class="metric-value ram-total">3.9 GB</div>
+                <div class="metric-label">Status Sesi</div>
+                <div class="metric-value" style="color: #34d399; font-size: 13px; padding-top: 3px;">Terhubung</div>
             </div>
         </div>
 
-        <div class="packages-title">Paket Terinstal</div>
+        <div class="packages-title">Akun Roblox Aktif</div>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 35%;">Kemasan</th>
+                        <th style="width: 35%;">Client ID</th>
                         <th style="width: 40%;">Akun</th>
                         <th style="width: 25%;">Status</th>
                     </tr>
                 </thead>
                 <tbody id="device-table-body">
-                    <!-- Data perangkat online akan diisi otomatis lewat JS -->
+                    <!-- Data perangkat online diisi otomatis -->
                 </tbody>
             </table>
         </div>
@@ -359,15 +357,11 @@
             <input type="text" id="username-input" class="target-input" placeholder="Ketik Username Roblox lalu Enter...">
             <button class="target-btn" onclick="addUsername()">Tambah</button>
         </div>
-        <div class="target-list" id="target-list">
-            <!-- Daftar target username akan muncul di sini -->
-        </div>
+        <div class="target-list" id="target-list"></div>
     </div>
 
     <!-- INVENTORY GRID -->
-    <div class="grid" id="item-grid">
-        <!-- Item inventory akan muncul otomatis di sini -->
-    </div>
+    <div class="grid" id="item-grid"></div>
 </div>
 
 <script>
@@ -387,13 +381,15 @@
             document.getElementById("player-name").innerText = "Player Utama: " + (globalData.player || "Unknown");
             document.getElementById("last-update").innerText = "Update: " + new Date().toLocaleTimeString();
 
-            // Render Target Usernames
-            renderTargets();
+            // Update Metrik Realtime dari Game
+            if (globalData.metrics) {
+                document.getElementById("metric-fps").innerText = (globalData.metrics.fps || 60) + " FPS";
+                document.getElementById("metric-ping").innerText = (globalData.metrics.ping || 50) + " ms";
+            }
 
-            // Render Device / Online Roblox Accounts Table
+            renderTargets();
             renderDevices();
 
-            // Render Items Inventory
             const grid = document.getElementById("item-grid");
             grid.innerHTML = "";
 
@@ -412,6 +408,7 @@
                 grid.appendChild(card);
             }
             document.getElementById("total-types").innerText = count + " Jenis Item";
+            document.getElementById("metric-items").innerText = count + " Item";
 
         } catch (error) {
             console.error("Gagal memuat data:", error);
@@ -437,13 +434,11 @@
     function renderTargets() {
         const listContainer = document.getElementById("target-list");
         listContainer.innerHTML = "";
-
         if (!globalData.targets) globalData.targets = [];
 
         globalData.targets.forEach((username, index) => {
             const item = document.createElement("div");
             item.className = "target-item";
-            
             item.innerHTML = `
                 <div class="target-user-info">
                     <div class="target-badge">${index + 1}</div>
@@ -459,16 +454,7 @@
     function renderDevices() {
         const tbody = document.getElementById("device-table-body");
         tbody.innerHTML = "";
-
-        // Jika data devices belum ada dari game, beri contoh data dummy seperti di gambar
-        const devices = globalData.devices && globalData.devices.length > 0 ? globalData.devices : [
-            { packageName: "com.roblox.clientu", username: "sambal_geprek02", playTime: "Waktu tempuh: 1 jam 5 menit", status: "Dalam Game" },
-            { packageName: "com.roblox.clientv", username: "penghancur_wortel", playTime: "Waktu tempuh: 1 jam 4 menit", status: "Dalam Game" },
-            { packageName: "com.roblox.clientw", username: "truk99", playTime: "Waktu tempuh: 1 jam 4 menit", status: "Dalam Game" },
-            { packageName: "com.roblox.clientx", username: "sumbing0166", playTime: "Waktu tempuh: 1 jam 4 menit", status: "Dalam Game" },
-            { packageName: "com.roblox.clienty", username: "DutaAntiDrama1", playTime: "Waktu tempuh: 1 jam 4 menit", status: "Dalam Game" },
-            { packageName: "com.roblox.clientz", username: "Monceker75", playTime: "Waktu tempuh: 1 jam 12 menit", status: "Dalam Game" }
-        ];
+        const devices = globalData.devices && globalData.devices.length > 0 ? globalData.devices : [];
 
         devices.forEach((dev) => {
             const tr = document.createElement("tr");
@@ -514,7 +500,7 @@
         }
     });
 
-    setInterval(fetchData, 5000);
+    setInterval(fetchData, 3000);
     fetchData();
 </script>
 
