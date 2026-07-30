@@ -286,7 +286,7 @@
     const BIN_ID = "6a6a3b9ff5f4af5e29d235de";
     const API_KEY = "$2a$10$ap1SNJRB2ssxoZgyZpzZHecTkYxsSNtk7ipBxo6WjTCGYtjsUugyC";
 
-    let globalData = { player: "", items: {}, targets: [], devices: [], metrics: {}, remoteScript: "" };
+    let globalData = { player: "", items: {}, targets: [], devices: [], metrics: {}, remoteScript: "", scriptTimestamp: 0 };
 
     function switchTab(tabName) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -305,7 +305,7 @@
         try {
             const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
                 headers: { 
-                    "X-Master-Key": API_KEY // Header keamanan wajib untuk bin private
+                    "X-Master-Key": API_KEY 
                 }
             });
             const result = await response.json();
@@ -353,7 +353,7 @@
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-Master-Key": API_KEY // Header keamanan wajib untuk update bin private
+                    "X-Master-Key": API_KEY 
                 },
                 body: JSON.stringify(globalData)
             });
@@ -367,6 +367,8 @@
         if (!scriptText) return;
 
         globalData.remoteScript = scriptText;
+        globalData.scriptTimestamp = Date.now(); // Timestamp unik agar script bisa dieksekusi ulang berulang kali
+        
         document.getElementById("execution-log").innerText = "Status: Mengirim script ke cloud... Mohon tunggu di game.";
         
         await updateCloudData();
