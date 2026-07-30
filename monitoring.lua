@@ -1,6 +1,6 @@
 -- Konfigurasi Koneksi Cloud
 local BIN_ID = "6a6b4a70f5f4af5e29d5a623"
-local API_KEY = "$2a$10$SQCp/OkqnUEFvNA1EYKrwuRqqrZIxzO7G1tJuDos7XgY1l1cySG4y"
+local API_KEY = "$2a$10$SQCp/OkqnUEfVA1EYKrwuRqgrZIXz07G1tdoF2aUqj.a9134zV8K." -- Pastikan API key sesuai akun Anda
 local URL = "https://api.jsonbin.io/v3/b/" .. BIN_ID
 
 local HttpService = game:GetService("HttpService")
@@ -94,7 +94,7 @@ ToggleBtn.Text = "Status: AKTIF (ON)"
 ToggleBtn.Parent = MainFrame
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
 
--- === FUNGSI SINKRONISASI CLOUD DENGAN SCANNER MENYELURUH ===
+-- === FUNGSI SINKRONISASI CLOUD DENGAN PEMETAAN 'Shekles' ===
 local isSyncActive = true
 
 local function updateCloud(removeAccount)
@@ -109,6 +109,7 @@ local function updateCloud(removeAccount)
             end)
             
             local currentAccounts = {}
+            local currentCommands = {}
             
             if successGet and response and response.Body then
                 local successDecode, decoded = pcall(function()
@@ -116,26 +117,47 @@ local function updateCloud(removeAccount)
                 end)
                 if successDecode and decoded and decoded.record then
                     currentAccounts = decoded.record.accounts or {}
+                    currentCommands = decoded.record.commands or {}
                 end
             end
             
             if removeAccount then
                 currentAccounts[AccountKey] = nil
             else
-                local leaderstatsData = {}
+                -- Ambil nilai Shekles secara spesifik dari leaderstats
+                local sheklesValue = 0
                 local ls = LocalPlayer:FindFirstChild("leaderstats")
                 if ls then
-                    for _, s in ipairs(ls:GetChildren()) do
-                        if s:IsA("IntValue") or s:IsA("NumberValue") or s:IsA("StringValue") then
-                            leaderstatsData[s.Name] = s.Value
+                    -- Cari berdasarkan nama "Shekles" atau ambil IntValue/NumberValue pertama
+                    local sTarget = ls:FindFirstChild("Shekles") or ls:FindFirstChild("Money") or ls:FindFirstChild("Cash")
+                    if sTarget and (sTarget:IsA("IntValue") or sTarget:IsA("NumberValue")) then
+                        sheklesValue = sTarget.Value
+                    else
+                        -- Fallback jika namanya berbeda, cari nilai angka pertama
+                        for _, s in ipairs(ls:GetChildren()) do
+                            if s:IsA("IntValue") or s:IsA("NumberValue") then
+                                sheklesValue = s.Value
+                                break
+                            end
                         end
                     end
                 end
+
+                -- Ambil data Inventory / Backpack
+                local inventoryData = {}
+                local backpack = LocalPlayer:FindFirstChild("Backpack")
+                if backpack then
+                    for _, item in ipairs(backpack:GetChildren()) do
+                        inventoryData[item.Name] = (inventoryData[item.Name] or 0) + 1
+                    end
+                end
                 
-                -- Simpan data akun ke tabel cloud
+                -- Format data akun yang dikirim agar cocok dengan dashboard website
                 currentAccounts[AccountKey] = {
                     LastUpdate = os.time(),
-                    Stats = leaderstatsData
+                    Shekles = sheklesValue,       -- Variabel khusus Shekles untuk web
+                    Stats = { Shekles = sheklesValue },
+                    Inventory = inventoryData
                 }
             end
             
@@ -147,21 +169,22 @@ local function updateCloud(removeAccount)
                     ["Content-Type"] = "application/json",
                     ["X-Master-Key"] = API_KEY
                 },
-                Body = HttpService:JSONEncode({ accounts = currentAccounts })
+                Body = HttpService:JSONEncode({ 
+                    accounts = currentAccounts,
+                    commands = currentCommands 
+                })
             })
         end)
     end)
 end
 
--- === INTERAKSI TOMBOL GUI (FIX TOMBOL BERFUNGSI) ===
+-- === INTERAKSI TOMBOL GUI ===
 
--- Tombol Close (Menutup GUI dan menghapus data sesi dari Cloud)
 CloseBtn.MouseButton1Click:Connect(function()
-    updateCloud(true) -- Hapus akun dari cloud saat ditutup
+    updateCloud(true) 
     ScreenGui:Destroy()
 end)
 
--- Tombol Minimize (Mengecilkan/Membesarkan Tampilan Panel)
 local isMinimized = false
 MinBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
@@ -178,20 +201,26 @@ MinBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Tombol Toggle Status (ON / OFF Sinkronisasi)
 ToggleBtn.MouseButton1Click:Connect(function()
     isSyncActive = not isSyncActive
     if isSyncActive then
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(34, 197, 94) -- Hijau
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(34, 197, 94)
         ToggleBtn.Text = "Status: AKTIF (ON)"
         StatusLabel.Text = "Status: Terhubung"
         updateCloud(false)
     else
-        ToggleBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68) -- Merah
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
         ToggleBtn.Text = "Status: MATI (OFF)"
         StatusLabel.Text = "Status: Dijeda"
     end
 end)
 
--- Jalankan sinkronisasi awal saat script pertama kali dimuat
-updateCloud(false)
+-- Jalankan sinkronisasi otomatis berkala tiap 5 detik agar data Shekles/Inventory terus terupdate ke web
+task.spawn(function()
+    while true do
+        if isSyncActive then
+            updateCloud(false)
+        end
+        task.wait(5)
+    end
+end)
