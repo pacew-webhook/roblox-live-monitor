@@ -13,7 +13,7 @@
             padding: 15px;
         }
         .container {
-            max-width: 950px;
+            max-width: 1000px;
             margin: 0 auto;
             background: #161b2e;
             padding: 15px;
@@ -21,7 +21,6 @@
             border: 1px solid #2d3748;
         }
         
-        /* --- NAVIGASI TAB --- */
         .nav-tabs {
             display: flex;
             gap: 10px;
@@ -45,12 +44,8 @@
             color: #fff;
             border-color: #6366f1;
         }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         h2 { color: #4ade80; margin-top: 0; font-size: 17px; }
         .stats {
@@ -64,136 +59,104 @@
             border: 1px solid #2d3748;
         }
 
-        /* --- DEVICE & GAME METRICS --- */
-        .device-section {
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 15px;
+        }
+        @media(max-width: 850px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+
+        .device-section, .target-section, .shekles-section {
             background: #1e2640;
             border: 1px solid #2d3748;
             border-radius: 8px;
-            padding: 15px;
+            padding: 12px;
             margin-bottom: 15px;
         }
         .device-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             border-bottom: 1px solid #2d3748;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
-        .device-title {
-            font-weight: bold;
-            font-size: 14px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .online-badge {
-            background: #143324;
-            color: #4ade80;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            border: 1px solid #1e5638;
-        }
+        .device-title { font-weight: bold; font-size: 13px; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .online-badge { background: #143324; color: #4ade80; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #1e5638; }
+        
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
         }
         .metric-card {
-            background: #161b2e;
-            border: 1px solid #2d3748;
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
+            background: #161b2e; border: 1px solid #2d3748; padding: 8px; border-radius: 6px; text-align: center;
         }
-        .metric-label { font-size: 10px; color: #94a3b8; margin-bottom: 4px; text-transform: uppercase; }
-        .metric-value { font-size: 16px; font-weight: bold; color: #4ade80; }
+        .metric-label { font-size: 9px; color: #94a3b8; margin-bottom: 2px; text-transform: uppercase; }
+        .metric-value { font-size: 14px; font-weight: bold; color: #4ade80; }
         .metric-value.fps { color: #38bdf8; }
         .metric-value.ping { color: #facc15; }
-        .metric-value.items { color: #c084fc; }
 
-        .packages-title { font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; }
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
-        th, td { padding: 8px 10px; border-bottom: 1px solid #2d3748; }
-        th { color: #94a3b8; font-weight: 600; background: #161b2e; }
-        .status-ingame {
-            background: #143324; color: #4ade80; padding: 2px 6px;
-            border-radius: 4px; font-size: 10px; font-weight: bold;
-            border: 1px solid #1e5638; display: inline-block;
-        }
-        .account-info { display: flex; flex-direction: column; }
+        /* SHEKLESS LIST PANEL (KANAN) */
+        .shekles-panel-title { font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; display: flex; justify-content: space-between; }
+        .table-container { max-height: 380px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
+        th, td { padding: 6px 8px; border-bottom: 1px solid #2d3748; }
+        th { color: #94a3b8; font-weight: 600; background: #161b2e; position: sticky; top: 0; }
+        .status-ingame { background: #143324; color: #4ade80; padding: 2px 4px; border-radius: 3px; font-size: 9px; font-weight: bold; }
         .account-name { font-weight: bold; color: #e2e8f0; }
-        .account-time { font-size: 9px; color: #94a3b8; }
+        .shekles-val { color: #facc15; font-weight: bold; text-align: right; }
 
-        /* --- TARGET USERNAME SECTION --- */
-        .target-section {
-            background: #1e2640; padding: 12px; border-radius: 8px;
-            margin-bottom: 15px; border: 1px solid #2d3748;
-        }
-        .target-title { font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; }
-        .target-input-group { display: flex; gap: 8px; margin-bottom: 12px; }
+        /* INPUT TARGET */
+        .target-input-group { display: flex; gap: 6px; margin-bottom: 8px; }
         .target-input {
             flex: 1; background: #0f121e; border: 1px solid #2d3748;
-            padding: 8px 12px; border-radius: 6px; color: #fff; font-size: 12px; outline: none;
+            padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 11px; outline: none;
         }
         .target-btn {
-            background: #6366f1; color: #fff; border: none; padding: 0 16px;
-            border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;
+            background: #6366f1; color: #fff; border: none; padding: 0 12px;
+            border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer;
         }
-        .target-btn:hover { background: #4f46e5; }
-        .target-list { display: flex; flex-direction: column; gap: 8px; }
+        .target-list { display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto; }
         .target-item {
-            background: #161b2e; border: 1px solid #2d3748; padding: 8px 12px;
-            border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
+            background: #161b2e; border: 1px solid #2d3748; padding: 6px 10px;
+            border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;
         }
-        .target-user-info { display: flex; align-items: center; gap: 10px; }
-        .target-badge {
-            background: #3b82f6; color: #fff; width: 22px; height: 22px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;
-        }
-        .target-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; background: #2d3748; }
-        .target-username { font-weight: bold; font-size: 13px; color: #e2e8f0; }
-        .delete-btn {
-            background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b;
-            padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;
-        }
+        .delete-btn { background: #7f1d1d; color: #fca5a5; border: none; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; }
 
-        /* --- INVENTORY GRID --- */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+        /* INVENTORY GRID KIRI */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
         .card {
-            background: #1e2640; border: 1px solid #2d3748; padding: 10px 12px;
-            border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+            background: #1e2640; border: 1px solid #2d3748; padding: 8px 10px;
+            border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
         }
-        .item-info { display: flex; flex-direction: column; gap: 2px; }
-        .item-name { font-weight: bold; font-size: 13px; color: #e2e8f0; }
-        .item-sub { font-size: 10px; color: #94a3b8; }
+        .item-icon-box {
+            width: 32px; height: 32px; background: #161b2e; border: 1px solid #2d3748;
+            border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
+        }
+        .item-icon-box img { width: 100%; height: 100%; object-fit: cover; }
+        .item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden; }
+        .item-name { font-weight: bold; font-size: 11px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-sub { font-size: 9px; color: #94a3b8; }
         .item-count {
-            background: #143324; color: #4ade80; padding: 4px 8px;
-            border-radius: 6px; font-weight: bold; font-size: 12px; border: 1px solid #1e5638;
+            background: #143324; color: #4ade80; padding: 3px 6px;
+            border-radius: 6px; font-weight: bold; font-size: 11px; border: 1px solid #1e5638; flex-shrink: 0;
         }
 
-        /* --- STYLING TAB SCRIPTS --- */
-        .script-box {
-            background: #1e2640; border: 1px solid #2d3748; border-radius: 8px; padding: 15px;
-        }
+        /* SCRIPT HUB */
+        .script-box { background: #1e2640; border: 1px solid #2d3748; border-radius: 8px; padding: 15px; }
         .script-textarea {
             width: 100%; height: 180px; background: #0f121e; border: 1px solid #2d3748;
-            color: #4ade80; font-family: monospace; padding: 10px; border-radius: 6px;
-            font-size: 12px; resize: vertical; outline: none; box-sizing: border-box;
+            color: #4ade80; font-family: monospace; padding: 10px; border-radius: 6px; font-size: 12px; outline: none; box-sizing: border-box;
         }
         .execute-btn {
-            background: #22c55e; color: #0f121e; border: none; padding: 10px 20px;
-            border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 10px;
+            background: #22c55e; color: #0f121e; border: none; padding: 8px 16px;
+            border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: 10px;
         }
-        .execute-btn:hover { background: #16a34a; color: #fff; }
-        .execution-log {
-            margin-top: 15px; background: #0f121e; border: 1px solid #2d3748;
-            padding: 10px; border-radius: 6px; font-family: monospace; font-size: 11px; color: #38bdf8;
-        }
+        .execution-log { margin-top: 10px; background: #0f121e; border: 1px solid #2d3748; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 10px; color: #38bdf8; }
     </style>
 </head>
 <body>
@@ -201,7 +164,6 @@
 <div class="container">
     <h2>🌱 Grow A Garden 2 - Web Control Center</h2>
     
-    <!-- Tab Navigasi -->
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
         <button class="tab-btn" onclick="switchTab('scripts')">Scripts Hub</button>
@@ -211,71 +173,76 @@
     <div id="tab-dashboard" class="tab-content active">
         <div class="stats">
             <div>
-                <span id="player-name" style="font-weight: bold; color: #60a5fa; font-size: 13px;">Memuat Player...</span><br>
-                <small style="color: #94a3b8; font-size: 11px;" id="last-update">Status: Menghubungkan...</small>
+                <span id="player-name" style="font-weight: bold; color: #60a5fa; font-size: 12px;">Memuat Player...</span><br>
+                <small style="color: #94a3b8; font-size: 10px;" id="last-update">Status: Menghubungkan...</small>
             </div>
-            <div style="color: #4ade80; font-weight: bold; font-size: 13px;" id="total-types">0 Jenis Item</div>
+            <div style="color: #4ade80; font-weight: bold; font-size: 12px;" id="total-types">0 Jenis Item</div>
         </div>
 
-        <div class="device-section">
-            <div class="device-header">
-                <div class="device-title">
-                    <span>VIP Session (Delta)</span>
-                    <span class="online-badge">● Online</span>
+        <div class="main-layout">
+            <!-- SISI KIRI (Grid Item & Target) -->
+            <div>
+                <div class="target-section">
+                    <div class="target-title" style="font-size: 11px; font-weight: bold; color: #94a3b8; margin-bottom: 6px;">Target Username (Penerima)</div>
+                    <div class="target-input-group">
+                        <input type="text" id="username-input" class="target-input" placeholder="Ketik Username lalu Enter...">
+                        <button class="target-btn" onclick="addUsername()">Tambah</button>
+                    </div>
+                    <div class="target-list" id="target-list"></div>
                 </div>
+
+                <div class="packages-title" style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Barang Terkumpul (Inventory)</div>
+                <div class="grid" id="item-grid"></div>
             </div>
 
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-label">Performa FPS</div>
-                    <div class="metric-value fps" id="metric-fps">60 FPS</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Koneksi Ping</div>
-                    <div class="metric-value ping" id="metric-ping">45 ms</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Total Jenis Item</div>
-                    <div class="metric-value items" id="metric-items">0 Item</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Status Sesi</div>
-                    <div class="metric-value" style="color: #34d399; font-size: 13px; padding-top: 3px;">Terhubung</div>
-                </div>
-            </div>
+            <!-- SISI KANAN (Panel Shekles & Metrics) -->
+            <div>
+                <div class="device-section">
+                    <div class="device-header">
+                        <div class="device-title">
+                            <span>Sesi Delta</span>
+                            <span class="online-badge">● Online</span>
+                        </div>
+                    </div>
 
-            <div class="packages-title">Akun Roblox Aktif</div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 35%;">Client ID</th>
-                            <th style="width: 40%;">Akun</th>
-                            <th style="width: 25%;">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="device-table-body"></tbody>
-                </table>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-label">Performa FPS</div>
+                            <div class="metric-value fps" id="metric-fps">60 FPS</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Koneksi Ping</div>
+                            <div class="metric-value ping" id="metric-ping">45 ms</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="shekles-section">
+                    <div class="shekles-panel-title">
+                        <span>Accounts & Shekles List</span>
+                        <span style="color: #4ade80;" id="online-count">1/1 Online</span>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Akun</th>
+                                    <th style="text-align: right;">Shekles</th>
+                                </tr>
+                            </thead>
+                            <tbody id="device-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="target-section">
-            <div class="target-title">Target Username (Penerima) - Masukkan sebanyak-banyaknya</div>
-            <div class="target-input-group">
-                <input type="text" id="username-input" class="target-input" placeholder="Ketik Username Roblox lalu Enter...">
-                <button class="target-btn" onclick="addUsername()">Tambah</button>
-            </div>
-            <div class="target-list" id="target-list"></div>
-        </div>
-
-        <div class="grid" id="item-grid"></div>
     </div>
 
-    <!-- TAB 2: SCRIPTS HUB (REMOTE EXECUTE) -->
+    <!-- TAB 2: SCRIPTS HUB -->
     <div id="tab-scripts" class="tab-content">
         <div class="script-box">
-            <div class="target-title" style="margin-bottom: 10px;">Remote Execute Script ke Delta (In-Game)</div>
-            <textarea id="script-input" class="script-textarea" placeholder="Tulis script Luau di sini...&#10;Contoh: print('Halo dari Web!')"></textarea>
+            <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Remote Execute Script ke Delta (In-Game)</div>
+            <textarea id="script-input" class="script-textarea" placeholder="Tulis script Luau di sini..."></textarea>
             <button class="execute-btn" onclick="sendScriptToGame()">🚀 Execute ke Delta</button>
             <div class="execution-log" id="execution-log">Status: Menunggu perintah script dikirim...</div>
         </div>
@@ -286,7 +253,7 @@
     const BIN_ID = "6a6a3b9ff5f4af5e29d235de";
     const API_KEY = "$2a$10$ap1SNJRB2ssxoZgyZpzZHecTkYxsSNtk7ipBxo6WjTCGYtjsUugyC";
 
-    let globalData = { player: "", items: {}, targets: [], devices: [], metrics: {}, remoteScript: "", scriptTimestamp: 0 };
+    let globalData = { player: "", shekles: 0, items: {}, targets: [], devices: [], metrics: {}, remoteScript: "", scriptTimestamp: 0 };
 
     function switchTab(tabName) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -304,9 +271,7 @@
     async function fetchData() {
         try {
             const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                headers: { 
-                    "X-Master-Key": API_KEY 
-                }
+                headers: { "X-Master-Key": API_KEY }
             });
             const result = await response.json();
             globalData = result.record;
@@ -328,19 +293,24 @@
             let count = 0;
             for (const [itemName, qty] of Object.entries(globalData.items || {})) {
                 count++;
+                
+                // Membuat ikon dinamis menggunakan placeholder / placeholder ikon huruf inisial atau generator icon game
+                // Menggunakan emoji atau placeholder visual yang rapi
                 const card = document.createElement("div");
                 card.className = "card";
                 card.innerHTML = `
+                    <div class="item-icon-box">
+                        <span style="font-size: 14px;">🌱</span>
+                    </div>
                     <div class="item-info">
-                        <span class="item-name">🌿 ${itemName}</span>
-                        <span class="item-sub">Inventory Item</span>
+                        <span class="item-name" title="${itemName}">${itemName}</span>
+                        <span class="item-sub">Inventory</span>
                     </div>
                     <span class="item-count">x${qty}</span>
                 `;
                 grid.appendChild(card);
             }
             document.getElementById("total-types").innerText = count + " Jenis Item";
-            document.getElementById("metric-items").innerText = count + " Item";
 
         } catch (error) {
             console.error("Gagal memuat data:", error);
@@ -353,12 +323,12 @@
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-Master-Key": API_KEY 
+                    "X-Master-Key": API_KEY
                 },
                 body: JSON.stringify(globalData)
             });
         } catch (error) {
-            console.error("Gagal memperbarui data ke cloud:", error);
+            console.error("Gagal memperbarui data:", error);
         }
     }
 
@@ -367,12 +337,11 @@
         if (!scriptText) return;
 
         globalData.remoteScript = scriptText;
-        globalData.scriptTimestamp = Date.now(); // Timestamp unik agar script bisa dieksekusi ulang berulang kali
+        globalData.scriptTimestamp = Date.now();
         
-        document.getElementById("execution-log").innerText = "Status: Mengirim script ke cloud... Mohon tunggu di game.";
-        
+        document.getElementById("execution-log").innerText = "Status: Mengirim script ke cloud...";
         await updateCloudData();
-        document.getElementById("execution-log").innerText = "Status: Script berhasil dikirim! Delta akan mengeksekusinya.";
+        document.getElementById("execution-log").innerText = "Status: Script berhasil dikirim dan siap dieksekusi!";
     }
 
     function renderTargets() {
@@ -384,11 +353,7 @@
             const item = document.createElement("div");
             item.className = "target-item";
             item.innerHTML = `
-                <div class="target-user-info">
-                    <div class="target-badge">${index + 1}</div>
-                    <img src="https://www.roblox.com/headshot-thumbnail/image?userId=1&width=420&height=420&format=png" class="target-avatar" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
-                    <span class="target-username">${username}</span>
-                </div>
+                <span>👤 ${username}</span>
                 <button class="delete-btn" onclick="removeUsername(${index})">HAPUS</button>
             `;
             listContainer.appendChild(item);
@@ -398,19 +363,22 @@
     function renderDevices() {
         const tbody = document.getElementById("device-table-body");
         tbody.innerHTML = "";
-        const devices = globalData.devices && globalData.devices.length > 0 ? globalData.devices : [];
+        const devices = globalData.devices && globalData.devices.length > 0 ? globalData.devices : [{
+            username: globalData.player || "Unknown",
+            shekles: globalData.shekles || 0,
+            status: "Dalam Game"
+        }];
 
         devices.forEach((dev) => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td><span style="color: #60a5fa; font-family: monospace;">📦 ${dev.packageName}</span></td>
                 <td>
-                    <div class="account-info">
-                        <span class="account-name">👤 ${dev.username}</span>
-                        <span class="account-time">${dev.playTime}</span>
+                    <div style="display: flex; flex-direction: column;">
+                        <span class="account-name">🟢 ${dev.username || globalData.player}</span>
+                        <span style="font-size: 9px; color: #94a3b8;">${dev.status || "Dalam Game"}</span>
                     </div>
                 </td>
-                <td><span class="status-ingame">🟢 ${dev.status}</span></td>
+                <td class="shekles-val">${(dev.shekles || globalData.shekles || 0).toLocaleString()}</td>
             `;
             tbody.appendChild(tr);
         });
