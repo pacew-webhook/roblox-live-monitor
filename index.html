@@ -155,30 +155,41 @@
             const now = Date.now();
             const lastActiveTime = globalData.lastHeartbeat || 0;
             
-            // Tenggang waktu heartbeat dilonggarkan jadi 5 menit (300000 ms) agar stabil
+            // Cek apakah game aktif dalam 5 menit terakhir (300000 ms)
             const isOnline = globalData.player && globalData.player !== "" && (now - lastActiveTime < 300000);
 
             if (!isOnline) {
-                badge.className = "offline-badge"; badge.innerText = "○ Offline";
+                // TAMPILKAN STATUS KOSONG / OFFLINE SAAT GAME DITUTUP
+                badge.className = "offline-badge"; 
+                badge.innerText = "○ Offline";
+                
                 document.getElementById("online-count").innerText = "0/1 Online";
                 document.getElementById("player-name").innerText = "Player Utama: Menunggu Sesi Delta...";
-                document.getElementById("last-update").innerText = "Status: Belum Terdeteksi Aktif";
+                document.getElementById("last-update").innerText = "Status: Game Ditutup / Offline";
+                
                 document.getElementById("metric-fps").innerText = "0 FPS";
                 document.getElementById("metric-ping").innerText = "0 ms";
                 document.getElementById("total-types").innerText = "0 Jenis Item";
+                
+                // Mengosongkan grid item inventory di web
                 document.getElementById("item-grid").innerHTML = "";
+                
+                // Mereset tabel akun & shekles menjadi offline dan bernilai 0
                 document.getElementById("device-table-body").innerHTML = `<tr><td><span class="account-name">🔴 Offline</span></td><td class="shekles-val">0</td></tr>`;
                 return;
             }
 
-            badge.className = "online-badge"; badge.innerText = "● Online";
+            badge.className = "online-badge"; 
+            badge.innerText = "● Online";
             document.getElementById("online-count").innerText = "1/1 Online";
             document.getElementById("player-name").innerText = "Player Utama: " + (globalData.player || "Unknown");
             document.getElementById("last-update").innerText = "Update: " + new Date().toLocaleTimeString();
+            
             if (globalData.metrics) {
                 document.getElementById("metric-fps").innerText = (globalData.metrics.fps || 60) + " FPS";
                 document.getElementById("metric-ping").innerText = (globalData.metrics.ping || 50) + " ms";
             }
+            
             renderTargets();
             renderDevices(true);
             renderInventoryGrid();
@@ -268,7 +279,7 @@
 
     document.getElementById("username-input").addEventListener("keypress", function(e) { if(e.key === 'Enter') addUsername(); });
     
-    setInterval(fetchData, 4000); // Polling web dipercepat menjadi setiap 4 detik
+    setInterval(fetchData, 4000);
     fetchData();
 </script>
 </body>
