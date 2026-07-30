@@ -3,290 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grow A Garden 2 - Web Control Center</title>
+    <title>Roblox Live Remote Control Center</title>
     <style>
-        body { background-color: #0f121e; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; }
-        .container { max-width: 1000px; margin: 0 auto; background: #161b2e; padding: 15px; border-radius: 12px; border: 1px solid #2d3748; }
-        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #2d3748; padding-bottom: 10px; }
-        .tab-btn { background: #1e2640; color: #94a3b8; border: 1px solid #2d3748; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
-        .tab-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        h2 { color: #4ade80; margin-top: 0; font-size: 17px; }
-        .stats { background: #1e2640; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2d3748; }
-        .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 15px; }
-        @media(max-width: 850px) { .main-layout { grid-template-columns: 1fr; } }
-        .device-section, .target-section, .shekles-section { background: #1e2640; border: 1px solid #2d3748; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
-        .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #2d3748; padding-bottom: 8px; }
-        .online-badge { background: #143324; color: #4ade80; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #1e5638; }
-        .offline-badge { background: #331414; color: #f87171; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #561e1e; }
-        .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
-        .metric-card { background: #161b2e; border: 1px solid #2d3748; padding: 8px; border-radius: 6px; text-align: center; }
-        .metric-label { font-size: 9px; color: #94a3b8; margin-bottom: 2px; text-transform: uppercase; }
-        .metric-value { font-size: 14px; font-weight: bold; color: #4ade80; }
-        .table-container { max-height: 380px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
-        th, td { padding: 6px 8px; border-bottom: 1px solid #2d3748; }
-        th { color: #94a3b8; font-weight: 600; background: #161b2e; position: sticky; top: 0; }
-        .account-name { font-weight: bold; color: #e2e8f0; }
-        .shekles-val { color: #facc15; font-weight: bold; text-align: right; }
-        .target-input-group { display: flex; gap: 6px; margin-bottom: 8px; }
-        .target-input, .search-input { flex: 1; background: #0f121e; border: 1px solid #2d3748; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 11px; outline: none; }
-        .search-input { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        .target-btn { background: #6366f1; color: #fff; border: none; padding: 0 12px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; }
-        .target-list { display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto; }
-        .target-item { background: #161b2e; border: 1px solid #2d3748; padding: 6px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
-        .delete-btn { background: #7f1d1d; color: #fca5a5; border: none; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
-        .card { background: #1e2640; border: 1px solid #2d3748; padding: 8px 10px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-        .item-icon-box { width: 32px; height: 32px; background: #161b2e; border: 1px solid #2d3748; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-        .item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden; }
-        .item-name { font-weight: bold; font-size: 11px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-sub { font-size: 9px; color: #facc15; }
-        .item-count { background: #143324; color: #4ade80; padding: 3px 6px; border-radius: 6px; font-weight: bold; font-size: 11px; border: 1px solid #1e5638; flex-shrink: 0; }
-        .script-box { background: #1e2640; border: 1px solid #2d3748; border-radius: 8px; padding: 15px; }
-        .script-textarea { width: 100%; height: 180px; background: #0f121e; border: 1px solid #2d3748; color: #4ade80; font-family: monospace; padding: 10px; border-radius: 6px; font-size: 12px; outline: none; box-sizing: border-box; }
-        .execute-btn { background: #22c55e; color: #0f121e; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: 10px; }
-        .execution-log { margin-top: 10px; background: #0f121e; border: 1px solid #2d3748; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 10px; color: #38bdf8; }
-        .error-banner { background: #561e1e; color: #f87171; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 11px; display: none; border: 1px solid #7f1d1d; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121214;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #1a1a1e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h2 {
+            color: #4ade80;
+            text-align: center;
+        }
+        .card {
+            background: #27272a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .status-online {
+            color: #4ade80;
+            font-weight: bold;
+        }
+        .status-offline {
+            color: #f87171;
+            font-weight: bold;
+        }
+        .metrics-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .item-card {
+            display: flex;
+            justify-content: space-between;
+            background: #3f3f46;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 6px;
+        }
+        #inventory-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <h2>🌱 Grow A Garden 2 - Web Control Center</h2>
-    <div id="error-banner" class="error-banner">Error 404/429: Periksa kembali Bin ID atau Master Key Anda di JSONBin.io.</div>
-    <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
-        <button class="tab-btn" onclick="switchTab('scripts')">Scripts Hub</button>
-    </div>
-    <div id="tab-dashboard" class="tab-content active">
-        <div class="stats">
-            <div>
-                <span id="player-name" style="font-weight: bold; color: #60a5fa; font-size: 12px;">Memuat Player...</span><br>
-                <small style="color: #94a3b8; font-size: 10px;" id="last-update">Status: Menghubungkan...</small>
-            </div>
-            <div style="color: #4ade80; font-weight: bold; font-size: 12px;" id="total-types">0 Jenis Item</div>
+    <h2>Control Center</h2>
+    
+    <!-- Status Sesi -->
+    <div class="card">
+        <div id="player-name">Memuat Player...</div>
+        <div>Status: <span id="status-badge" class="status-offline">Menghubungkan...</span></div>
+        <div class="metrics-row">
+            <span>Performa FPS: <strong id="fps-val">0 FPS</strong></span>
+            <span>Koneksi Ping: <strong id="ping-val">0 ms</strong></span>
         </div>
-        <div class="main-layout">
-            <div>
-                <div class="target-section">
-                    <div style="font-size: 11px; font-weight: bold; color: #94a3b8; margin-bottom: 6px;">Target Username (Penerima)</div>
-                    <div class="target-input-group">
-                        <input type="text" id="username-input" class="target-input" placeholder="Ketik Username lalu Enter...">
-                        <button class="target-btn" onclick="addUsername()">Tambah</button>
-                    </div>
-                    <div class="target-list" id="target-list"></div>
-                </div>
-                <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Barang Terkumpul (Inventory)</div>
-                <input type="text" id="item-search-input" class="search-input" placeholder="Cari nama item di backpack..." oninput="renderInventoryGrid()">
-                <div class="grid" id="item-grid"></div>
-            </div>
-            <div>
-                <div class="device-section">
-                    <div class="device-header">
-                        <div style="font-weight: bold; font-size: 13px; color: #fff; display: flex; align-items: center; gap: 8px;">
-                            <span>Sesi Delta</span>
-                            <span id="session-badge" class="offline-badge">○ Offline</span>
-                        </div>
-                    </div>
-                    <div class="metrics-grid">
-                        <div class="metric-card"><div class="metric-label">Performa FPS</div><div class="metric-value" id="metric-fps" style="color: #38bdf8;">0 FPS</div></div>
-                        <div class="metric-card"><div class="metric-label">Koneksi Ping</div><div class="metric-value" id="metric-ping" style="color: #facc15;">0 ms</div></div>
-                    </div>
-                </div>
-                <div class="shekles-section">
-                    <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; display: flex; justify-content: space-between;">
-                        <span>Accounts & Shekles List</span>
-                        <span style="color: #4ade80;" id="online-count">0/1 Online</span>
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <thead><tr><th>Akun</th><th style="text-align: right;">Shekles</th></tr></thead>
-                            <tbody id="device-table-body">
-                                <tr><td><span class="account-name">🔴 Offline</span></td><td class="shekles-val">0</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div style="margin-top: 8px;">Shekles: <strong id="player-shekles">0</strong></div>
     </div>
-    <div id="tab-scripts" class="tab-content">
-        <div class="script-box">
-            <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Remote Execute Script ke Delta (In-Game)</div>
-            <textarea id="script-input" class="script-textarea" placeholder="Tulis script Luau di sini..."></textarea>
-            <button class="execute-btn" onclick="sendScriptToGame()">🚀 Execute ke Delta</button>
-            <div class="execution-log" id="execution-log">Status: Menunggu perintah script dikirim...</div>
+
+    <!-- Barang Terkumpul -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span>Barang Terkumpul (Inventory)</span>
+            <span id="total-types">0 Jenis Item</span>
+        </div>
+        <div id="inventory-list">
+            <div style="color: #a1a1aa; text-align: center; padding: 10px;">Menunggu data dari game...</div>
         </div>
     </div>
 </div>
+
 <script>
     const BIN_ID = "6a6aba72da38895dfea25258";
     const API_KEY = "$2a$10$ERw5fC9bbSp9uFZOfMSSBe/JMRlA6u0xMsbEaI3qmBmP3noMd8LkW";
-    const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+    const URL = `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`;
 
-    let globalData = { player: "", shekles: 0, items: {}, targets: [], devices: [], metrics: {}, remoteScript: "", scriptTimestamp: 0, lastHeartbeat: 0 };
+    function updateDashboardUI(record) {
+        // Cek status Online/Offline berdasarkan waktu update terakhir (< 10 detik)
+        const currentTime = Math.floor(Date.now() / 1000);
+        const lastHeartbeat = record.lastHeartbeat ? Math.floor(record.lastHeartbeat / 1000) : record.timestamp;
+        const isOnline = (currentTime - lastHeartbeat) < 10;
 
-    function switchTab(tabName) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        if(tabName === 'dashboard') {
-            document.querySelectorAll('.tab-btn')[0].classList.add('active');
-            document.getElementById('tab-dashboard').classList.add('active');
-        } else {
-            document.querySelectorAll('.tab-btn')[1].classList.add('active');
-            document.getElementById('tab-scripts').classList.add('active');
+        const statusBadge = document.getElementById("status-badge");
+        statusBadge.innerText = isOnline ? "Online" : "Offline";
+        statusBadge.className = isOnline ? "status-online" : "status-offline";
+
+        // Update teks informasi player & metrics
+        document.getElementById("player-name").innerText = record.player || "Player Aktif";
+        document.getElementById("player-shekles").innerText = record.shekles ? record.shekles.toLocaleString() : "0";
+        document.getElementById("fps-val").innerText = (record.metrics && record.metrics.fps) ? record.metrics.fps + " FPS" : "0 FPS";
+        document.getElementById("ping-val").innerText = (record.metrics && record.metrics.ping) ? record.metrics.ping + " ms" : "0 ms";
+
+        // Update daftar inventory secara dinamis
+        const inventoryContainer = document.getElementById("inventory-list");
+        if (record.items) {
+            inventoryContainer.innerHTML = "";
+            let totalTypesCount = 0;
+
+            for (let [itemName, itemData] of Object.entries(record.items)) {
+                totalTypesCount++;
+                let itemCard = document.createElement("div");
+                itemCard.className = "item-card";
+                itemCard.innerHTML = `
+                    <span>${itemName}</span>
+                    <span style="color: #4ade80; font-weight: bold;">x${itemData.count.toLocaleString()}</span>
+                `;
+                inventoryContainer.appendChild(itemCard);
+            }
+            document.getElementById("total-types").innerText = `${totalTypesCount} Jenis Item`;
         }
     }
 
-    async function fetchData() {
+    async function fetchInventoryData() {
         try {
-            const response = await fetch(API_URL, {
+            let response = await fetch(URL, {
                 headers: { "X-Master-Key": API_KEY }
             });
             
-            const banner = document.getElementById("error-banner");
-            if (!response.ok) {
-                banner.style.display = "block";
-                return;
-            } else {
-                banner.style.display = "none";
-            }
-
-            const result = await response.json();
-            globalData = result.record || {};
-
-            const badge = document.getElementById("session-badge");
-            const now = Date.now();
-            const lastActiveTime = globalData.lastHeartbeat || 0;
-            const isOnline = globalData.player && globalData.player !== "" && (now - lastActiveTime < 60000);
-
-            if (!isOnline) {
-                badge.className = "offline-badge"; badge.innerText = "○ Offline";
-                document.getElementById("online-count").innerText = "0/1 Online";
-                document.getElementById("player-name").innerText = "Player Utama: Offline / Tidak Terhubung";
-                document.getElementById("last-update").innerText = "Status: Terputus";
-                document.getElementById("metric-fps").innerText = "0 FPS";
-                document.getElementById("metric-ping").innerText = "0 ms";
-                document.getElementById("total-types").innerText = "0 Jenis Item";
-                document.getElementById("item-grid").innerHTML = "";
-                document.getElementById("device-table-body").innerHTML = `<tr><td><span class="account-name">🔴 Offline</span></td><td class="shekles-val">0</td></tr>`;
-                return;
-            }
-
-            badge.className = "online-badge"; badge.innerText = "● Online";
-            document.getElementById("online-count").innerText = "1/1 Online";
-            document.getElementById("player-name").innerText = "Player Utama: " + (globalData.player || "Unknown");
-            document.getElementById("last-update").innerText = "Update: " + new Date().toLocaleTimeString();
-            if (globalData.metrics) {
-                document.getElementById("metric-fps").innerText = (globalData.metrics.fps || 60) + " FPS";
-                document.getElementById("metric-ping").innerText = (globalData.metrics.ping || 50) + " ms";
-            }
-            renderTargets();
-            renderDevices(true);
-            renderInventoryGrid();
-        } catch (e) {
-            console.error(e);
-        }
-    }
-
-    function renderInventoryGrid() {
-        const grid = document.getElementById("item-grid");
-        grid.innerHTML = "";
-        const searchQuery = (document.getElementById("item-search-input").value || "").toLowerCase();
-        let count = 0, visibleCount = 0;
-        
-        for (const [itemName, itemData] of Object.entries(globalData.items || {})) {
-            count++;
-            if (searchQuery && !itemName.toLowerCase().includes(searchQuery)) continue;
-            visibleCount++;
+            if (!response.ok) throw new Error("Gagal mengambil data dari server");
             
-            let qty = 1;
-            let itemVal = 0;
-            
-            if (typeof itemData === 'object' && itemData !== null) {
-                qty = itemData.count || 1;
-                itemVal = itemData.value || 0;
-            } else {
-                qty = itemData;
+            let data = await response.json();
+            if (data && data.record) {
+                updateDashboardUI(data.record);
             }
-
-            const card = document.createElement("div");
-            card.className = "card";
-            card.innerHTML = `
-                <div class="item-icon-box"><span style="font-size: 14px;">🌱</span></div>
-                <div class="item-info">
-                    <span class="item-name">${itemName}</span>
-                    <span class="item-sub">Value: ${itemVal.toLocaleString()}</span>
-                </div>
-                <span class="item-count">x${qty}</span>
-            `;
-            grid.appendChild(card);
-        }
-        document.getElementById("total-types").innerText = visibleCount + " / " + count + " Jenis Item";
-    }
-
-    async function updateCloudData() {
-        try {
-            await fetch(API_URL, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
-                body: JSON.stringify(globalData)
-            });
-        } catch (e) { console.error(e); }
-    }
-
-    async function sendScriptToGame() {
-        const scriptText = document.getElementById("script-input").value.trim();
-        if (!scriptText) return;
-        globalData.remoteScript = scriptText;
-        globalData.scriptTimestamp = Date.now();
-        document.getElementById("execution-log").innerText = "Status: Mengirim script ke cloud...";
-        await updateCloudData();
-        document.getElementById("execution-log").innerText = "Status: Script berhasil dikirim!";
-    }
-
-    function renderTargets() {
-        let listContainer = document.getElementById("target-list");
-        listContainer.innerHTML = "";
-        if (!globalData.targets) globalData.targets = [];
-        globalData.targets.forEach((username, index) => {
-            const item = document.createElement("div");
-            item.className = "target-item";
-            item.innerHTML = `<span>👤 ${username}</span><button class="delete-btn" onclick="removeUsername(${index})">HAPUS</button>`;
-            listContainer.appendChild(item);
-        });
-    }
-
-    function renderDevices(isOnline) {
-        document.getElementById("device-table-body").innerHTML = `<tr><td><span class="account-name">${isOnline ? '🟢' : '🔴'} ${globalData.player || "Unknown"}</span></td><td class="shekles-val">${(globalData.shekles || 0).toLocaleString()}</td></tr>`;
-    }
-
-    async function addUsername() {
-        const input = document.getElementById("username-input");
-        const val = input.value.trim();
-        if (val) {
-            if (!globalData.targets) globalData.targets = [];
-            if (!globalData.targets.includes(val)) {
-                globalData.targets.push(val);
-                input.value = "";
-                renderTargets();
-                await updateCloudData();
-            }
+        } catch (error) {
+            console.error("Koneksi error:", error);
+            document.getElementById("status-badge").innerText = "Offline (Gagal Terhubung)";
+            document.getElementById("status-badge").className = "status-offline";
         }
     }
 
-    async function removeUsername(index) {
-        if (globalData.targets) {
-            globalData.targets.splice(index, 1);
-            renderTargets();
-            await updateCloudData();
-        }
-    }
+    // Panggil pertama kali saat halaman dibuka
+    fetchInventoryData();
 
-    document.getElementById("username-input").addEventListener("keypress", function(e) { if(e.key === 'Enter') addUsername(); });
-    setInterval(fetchData, 12000);
-    fetchData();
+    // Pasang setInterval agar halaman web otomatis merefresh data setiap 2 detik
+    setInterval(fetchInventoryData, 2000);
 </script>
+
 </body>
 </html>
