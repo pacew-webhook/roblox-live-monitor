@@ -279,28 +279,50 @@
             const isOnline = (now - lastActiveTime) < 8000;
 
             const badge = document.getElementById("session-badge");
-            if (isOnline) {
-                badge.className = "online-badge";
-                badge.innerText = "● Online";
-            } else {
+            
+            // JIKA OFFLINE: Bersihkan/kosongkan tampilan web secara otomatis
+            if (!isOnline) {
                 badge.className = "offline-badge";
                 badge.innerText = "○ Offline";
+                
+                document.getElementById("online-count").innerText = "0/1 Online";
+                document.getElementById("player-name").innerText = "Player Utama: Offline / Tidak Terhubung";
+                document.getElementById("last-update").innerText = "Status: Terputus";
+                document.getElementById("metric-fps").innerText = "0 FPS";
+                document.getElementById("metric-ping").innerText = "0 ms";
+                document.getElementById("total-types").innerText = "0 Jenis Item";
+                
+                // Kosongkan grid item dan tabel shekles
+                document.getElementById("item-grid").innerHTML = "";
+                document.getElementById("device-table-body").innerHTML = `
+                    <tr>
+                        <td>
+                            <div style="display: flex; flex-direction: column;">
+                                <span class="account-name">🔴 Offline</span>
+                                <span style="font-size: 9px; color: #94a3b8;">Tidak ada sesi aktif</span>
+                            </div>
+                        </td>
+                        <td class="shekles-val">0</td>
+                    </tr>
+                `;
+                return;
             }
 
-            document.getElementById("online-count").innerText = isOnline ? "1/1 Online" : "0/1 Online";
+            // JIKA ONLINE: Muat data seperti biasa
+            badge.className = "online-badge";
+            badge.innerText = "● Online";
+
+            document.getElementById("online-count").innerText = "1/1 Online";
             document.getElementById("player-name").innerText = "Player Utama: " + (globalData.player || "Unknown");
             document.getElementById("last-update").innerText = "Update: " + new Date().toLocaleTimeString();
 
-            if (globalData.metrics && isOnline) {
+            if (globalData.metrics) {
                 document.getElementById("metric-fps").innerText = (globalData.metrics.fps || 60) + " FPS";
                 document.getElementById("metric-ping").innerText = (globalData.metrics.ping || 50) + " ms";
-            } else {
-                document.getElementById("metric-fps").innerText = "0 FPS";
-                document.getElementById("metric-ping").innerText = "0 ms";
             }
 
             renderTargets();
-            renderDevices(isOnline);
+            renderDevices(true);
             renderInventoryGrid();
 
         } catch (error) {
@@ -432,17 +454,4 @@
         if (globalData.targets) {
             globalData.targets.splice(index, 1);
             renderTargets();
-            await updateCloudData();
-        }
-    }
-
-    document.getElementById("username-input").addEventListener("keypress", function(e) {
-        if (e.key === 'Enter') addUsername();
-    });
-
-    setInterval(fetchData, 3000);
-    fetchData();
-</script>
-
-</body>
-</html>
+            awa
