@@ -48,11 +48,13 @@
         .script-textarea { width: 100%; height: 180px; background: #0f121e; border: 1px solid #2d3748; color: #4ade80; font-family: monospace; padding: 10px; border-radius: 6px; font-size: 12px; outline: none; box-sizing: border-box; }
         .execute-btn { background: #22c55e; color: #0f121e; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: 10px; }
         .execution-log { margin-top: 10px; background: #0f121e; border: 1px solid #2d3748; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 10px; color: #38bdf8; }
+        .error-banner { background: #561e1e; color: #f87171; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 11px; display: none; border: 1px solid #7f1d1d; }
     </style>
 </head>
 <body>
 <div class="container">
     <h2>🌱 Grow A Garden 2 - Web Control Center</h2>
+    <div id="error-banner" class="error-banner">Error 404/429: Periksa kembali Bin ID atau Master Key Anda di JSONBin.io.</div>
     <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
         <button class="tab-btn" onclick="switchTab('scripts')">Scripts Hub</button>
@@ -119,10 +121,8 @@
     </div>
 </div>
 <script>
-    // Konfigurasi JSONBin.io Anda
     const BIN_ID = "6a6ab3abf5f4af5e29d3b9d7";
-    const API_KEY = "$2a$10$ERw5fC9bbSp9uFZOfMSSBe/JMRlA6u0xMsbEaI3qmBmP3noMd8LkW"; // Contoh: $2a$10$...
-
+    const API_KEY = "$2a$10$ERw5fC9bbSp9uFZOfMSSBe/JMRlA6u0xMsbEaI3qmBmP3noMd8LkW";
     const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
     let globalData = { player: "", shekles: 0, items: {}, targets: [], devices: [], metrics: {}, remoteScript: "", scriptTimestamp: 0, lastHeartbeat: 0 };
@@ -142,15 +142,19 @@
     async function fetchData() {
         try {
             const response = await fetch(API_URL, {
-                method: "GET",
-                headers: {
-                    "X-Master-Key": API_KEY
-                }
+                headers: { "X-Master-Key": API_KEY }
             });
-            if (!response.ok) return;
             
-            const jsonRes = await response.json();
-            globalData = jsonRes.record || jsonRes || {};
+            const banner = document.getElementById("error-banner");
+            if (!response.ok) {
+                banner.style.display = "block";
+                return;
+            } else {
+                banner.style.display = "none";
+            }
+
+            const result = await response.json();
+            globalData = result.record || {};
 
             const badge = document.getElementById("session-badge");
             const now = Date.now();
@@ -208,10 +212,7 @@
         try {
             await fetch(API_URL, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Master-Key": API_KEY
-                },
+                headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
                 body: JSON.stringify(globalData)
             });
         } catch (e) { console.error(e); }
@@ -266,9 +267,7 @@
     }
 
     document.getElementById("username-input").addEventListener("keypress", function(e) { if(e.key === 'Enter') addUsername(); });
-    
-    // Poling diperlambat menjadi setiap 10 detik agar kuota JSONBin tidak cepat habis
-    setInterval(fetchData, 10000);
+    setInterval(fetchData, 12000);
     fetchData();
 </script>
 </body>
