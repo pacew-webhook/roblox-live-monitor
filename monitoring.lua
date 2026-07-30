@@ -1,6 +1,6 @@
 -- Konfigurasi Koneksi Cloud
 local BIN_ID = "6a6b4a70f5f4af5e29d5a623"
-local API_KEY = "$2a$10$SQCp/OkqnUEFvNA1EYKrwuRqqrZIxzO7G1tJuDos7XgY1l1cySG4y"
+local API_KEY = "$2a$10$SQCp/OkqnUEfvNA1EYKrwuRqqrZIxzO7G1tJuDos7XgY1l1cySG4y"
 local URL = "https://api.jsonbin.io/v3/b/" .. BIN_ID
 
 local HttpService = game:GetService("HttpService")
@@ -15,7 +15,7 @@ if not httpRequest then
     return
 end
 
--- === MEMBUAT TAMPILAN GUI ===
+-- === MEMBUAT TAMPILAN GUI DI GAME ===
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MultiAccountSyncGUI"
 ScreenGui.ResetOnSpawn = false
@@ -94,7 +94,7 @@ ToggleBtn.Text = "Status: AKTIF (ON)"
 ToggleBtn.Parent = MainFrame
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
 
--- === FUNGSI SINKRONISASI CLOUD DENGAN PENCARIAN INVENTORY LANJUTAN ===
+-- === FUNGSI SINKRONISASI CLOUD DENGAN PEMINDAIAN UI & BACKPACK ===
 local isSyncActive = true
 
 local function updateCloud(removeAccount)
@@ -124,7 +124,7 @@ local function updateCloud(removeAccount)
             if removeAccount then
                 currentAccounts[AccountKey] = nil
             else
-                -- 1. Ambil Shekles
+                -- 1. Ambil Shekles / Mata Uang
                 local sheklesValue = 0
                 local ls = LocalPlayer:FindFirstChild("leaderstats")
                 if ls then
@@ -141,10 +141,10 @@ local function updateCloud(removeAccount)
                     end
                 end
 
-                -- 2. Ambil Inventory dengan Pencarian Menyeluruh (Backpack + Folder Penyimpanan Lain)
+                -- 2. Ambil Inventory (Backpack + Hotbar PlayerGui)
                 local inventoryData = {}
                 
-                -- Cek Backpack standar
+                -- Cek Backpack
                 local backpack = LocalPlayer:FindFirstChild("Backpack")
                 if backpack then
                     for _, item in ipairs(backpack:GetChildren()) do
@@ -152,7 +152,7 @@ local function updateCloud(removeAccount)
                     end
                 end
 
-                -- Cek Character (jika ada item yang sedang dipegang/diberikan atribut)
+                -- Cek Character (Tool yang sedang dipegang)
                 local character = LocalPlayer.Character
                 if character then
                     for _, item in ipairs(character:GetChildren()) do
@@ -162,18 +162,22 @@ local function updateCloud(removeAccount)
                     end
                 end
 
-                -- Cek folder khusus inventory di dalam Player (jika ada)
-                for _, child in ipairs(LocalPlayer:GetChildren()) do
-                    if child:IsA("Folder") or child:IsA("Model") then
-                        if child.Name:lower():find("inventory") or child.Name:lower():find("bag") or child.Name:lower():find("storage") or child.Name:lower():find("items") then
-                            for _, item in ipairs(child:GetChildren()) do
-                                inventoryData[item.Name] = (inventoryData[item.Name] or 0) + (item.Value or 1)
+                -- Cek Hotbar / UI Game (Mendeteksi teks item seperti Sekop, Biji Stroberi, Biji Wortel di layar)
+                local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+                if playerGui then
+                    for _, gui in ipairs(playerGui:GetDescendants()) do
+                        if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+                            local txt = gui.Text
+                            if txt and (txt:find("Biji") or txt:find("Sekop") or txt:find("Bangun") or txt:find("Wortel") or txt:find("Stroberi")) then
+                                if #txt < 30 and not txt:find("Status") and not txt:find("Taman") then
+                                    inventoryData[txt] = 1
+                                end
                             end
                         end
                     end
                 end
                 
-                -- Kirim paket data akun
+                -- Kirim data terupdate ke Cloud
                 currentAccounts[AccountKey] = {
                     LastUpdate = os.time(),
                     Shekles = sheklesValue,
@@ -198,7 +202,7 @@ local function updateCloud(removeAccount)
     end)
 end
 
--- === INTERAKSI TOMBOL GUI ===
+-- === KONTROL TOMBOL GUI ===
 CloseBtn.MouseButton1Click:Connect(function()
     updateCloud(true) 
     ScreenGui:Destroy()
@@ -234,7 +238,7 @@ ToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Auto-sync tiap 5 detik
+-- Auto-sync otomatis setiap 5 detik
 task.spawn(function()
     while true do
         if isSyncActive then
