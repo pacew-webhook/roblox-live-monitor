@@ -31,8 +31,9 @@
         .account-name { font-weight: bold; color: #e2e8f0; }
         .shekles-val { color: #facc15; font-weight: bold; text-align: right; }
         .target-input-group { display: flex; gap: 6px; margin-bottom: 8px; }
-        .target-input, .search-input { flex: 1; background: #0f121e; border: 1px solid #2d3748; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 11px; outline: none; }
+        .target-input, .search-input, .account-select { flex: 1; background: #0f121e; border: 1px solid #2d3748; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 11px; outline: none; }
         .search-input { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        .account-select { width: 100%; margin-bottom: 10px; cursor: pointer; }
         .target-btn { background: #6366f1; color: #fff; border: none; padding: 0 12px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; }
         .target-list { display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto; }
         .target-item { background: #161b2e; border: 1px solid #2d3748; padding: 6px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
@@ -68,12 +69,10 @@
         <div class="main-layout">
             <div>
                 <div class="target-section">
-                    <div style="font-size: 11px; font-weight: bold; color: #94a3b8; margin-bottom: 6px;">Target Username (Penerima)</div>
-                    <div class="target-input-group">
-                        <input type="text" id="username-input" class="target-input" placeholder="Ketik Username lalu Enter...">
-                        <button class="target-btn" onclick="addUsername()">Tambah</button>
-                    </div>
-                    <div class="target-list" id="target-list"></div>
+                    <div style="font-size: 11px; font-weight: bold; color: #94a3b8; margin-bottom: 6px;">Pilih Akun yang Dipantau</div>
+                    <select id="account-selector" class="account-select" onchange="changeSelectedAccount()">
+                        <option value="">-- Semua Akun Terdeteksi --</option>
+                    </select>
                 </div>
                 <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Barang Terkumpul (Inventory)</div>
                 <input type="text" id="item-search-input" class="search-input" placeholder="Cari nama item di backpack..." oninput="renderInventoryGrid()">
@@ -95,7 +94,7 @@
                 <div class="shekles-section">
                     <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; display: flex; justify-content: space-between;">
                         <span>Accounts & Shekles List</span>
-                        <span style="color: #4ade80;" id="online-count">0/1 Online</span>
+                        <span style="color: #4ade80;" id="online-count">0 Online</span>
                     </div>
                     <div class="table-container">
                         <table>
@@ -123,7 +122,8 @@
     const API_KEY = "$2a$10$ERw5fC9bbSp9uFZOfMSSBe/JMRlA6u0xMsbEaI3qmBmP3noMd8LkW";
     const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-    let globalData = { player: "", shekles: 0, items: {}, targets: [], devices: [], metrics: {}, remoteScript: "", scriptTimestamp: 0, lastHeartbeat: 0 };
+    let globalData = { accounts: {} };
+    let selectedAccount = "";
 
     function switchTab(tabName) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -141,58 +141,112 @@
         try {
             const response = await fetch(API_URL, {
                 method: "GET",
-                headers: {
-                    "X-Master-Key": API_KEY,
-                    "Cache-Control": "no-cache"
-                }
+                headers: { "X-Master-Key": API_KEY, "Cache-Control": "no-cache" }
             });
             if (!response.ok) return;
             
             const jsonRes = await response.json();
             globalData = jsonRes.record || jsonRes || {};
 
-            const badge = document.getElementById("session-badge");
-            const now = Date.now();
-            const lastActiveTime = globalData.lastHeartbeat || 0;
-            
-            // Tenggang waktu heartbeat dilonggarkan jadi 5 menit (300000 ms) agar stabil
-            const isOnline = globalData.player && globalData.player !== "" && (now - lastActiveTime < 300000);
-
-            if (!isOnline) {
-                badge.className = "offline-badge"; badge.innerText = "○ Offline";
-                document.getElementById("online-count").innerText = "0/1 Online";
-                document.getElementById("player-name").innerText = "Player Utama: Menunggu Sesi Delta...";
-                document.getElementById("last-update").innerText = "Status: Belum Terdeteksi Aktif";
-                document.getElementById("metric-fps").innerText = "0 FPS";
-                document.getElementById("metric-ping").innerText = "0 ms";
-                document.getElementById("total-types").innerText = "0 Jenis Item";
-                document.getElementById("item-grid").innerHTML = "";
-                document.getElementById("device-table-body").innerHTML = `<tr><td><span class="account-name">🔴 Offline</span></td><td class="shekles-val">0</td></tr>`;
-                return;
-            }
-
-            badge.className = "online-badge"; badge.innerText = "● Online";
-            document.getElementById("online-count").innerText = "1/1 Online";
-            document.getElementById("player-name").innerText = "Player Utama: " + (globalData.player || "Unknown");
-            document.getElementById("last-update").innerText = "Update: " + new Date().toLocaleTimeString();
-            if (globalData.metrics) {
-                document.getElementById("metric-fps").innerText = (globalData.metrics.fps || 60) + " FPS";
-                document.getElementById("metric-ping").innerText = (globalData.metrics.ping || 50) + " ms";
-            }
-            renderTargets();
-            renderDevices(true);
-            renderInventoryGrid();
+            updateAccountSelector();
+            renderDashboard();
         } catch (e) {
             console.error("Fetch Error:", e);
         }
     }
 
-    function renderInventoryGrid() {
+    function updateAccountSelector() {
+        const selector = document.getElementById("account-selector");
+        const accounts = globalData.accounts || {};
+        const currentVal = selector.value;
+        
+        selector.innerHTML = '<option value="">-- Pilih Akun --</option>';
+        let found = false;
+
+        for (const accName in accounts) {
+            const opt = document.createElement("option");
+            opt.value = accName;
+            opt.innerText = accName;
+            if (accName === currentVal) opt.selected = true;
+            selector.appendChild(opt);
+            found = true;
+        }
+
+        if (!selectedAccount && found) {
+            selectedAccount = Object.keys(accounts)[0];
+            selector.value = selectedAccount;
+        }
+    }
+
+    function changeSelectedAccount() {
+        selectedAccount = document.getElementById("account-selector").value;
+        renderDashboard();
+    }
+
+    function renderDashboard() {
+        const accounts = globalData.accounts || {};
+        const badge = document.getElementById("session-badge");
+        const tableBody = document.getElementById("device-table-body");
+        
+        tableBody.innerHTML = "";
+        let onlineCount = 0;
+        let activeData = null;
+
+        for (const [accName, accData] of Object.entries(accounts)) {
+            onlineCount++;
+            if (accName === selectedAccount) {
+                activeData = accData;
+            }
+            
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td><span class="account-name">🟢 ${accName}</span></td><td class="shekles-val">${(accData.shekles || 0).toLocaleString()}</td>`;
+            tableBody.appendChild(tr);
+        }
+
+        document.getElementById("online-count").innerText = onlineCount + " Online";
+
+        if (!activeData && onlineCount > 0) {
+            selectedAccount = Object.keys(accounts)[0];
+            activeData = accounts[selectedAccount];
+            document.getElementById("account-selector").value = selectedAccount;
+        }
+
+        if (!activeData) {
+            badge.className = "offline-badge"; badge.innerText = "○ Offline";
+            document.getElementById("player-name").innerText = "Player Utama: Menunggu Sesi Delta...";
+            document.getElementById("last-update").innerText = "Status: Belum Terdeteksi Aktif";
+            document.getElementById("metric-fps").innerText = "0 FPS";
+            document.getElementById("metric-ping").innerText = "0 ms";
+            document.getElementById("total-types").innerText = "0 Jenis Item";
+            document.getElementById("item-grid").innerHTML = "";
+            if (onlineCount === 0) {
+                tableBody.innerHTML = `<tr><td><span class="account-name">🔴 Offline</span></td><td class="shekles-val">0</td></tr>`;
+            }
+            return;
+        }
+
+        badge.className = "online-badge"; badge.innerText = "● Online";
+        document.getElementById("player-name").innerText = "Player Dipantau: " + selectedAccount;
+        document.getElementById("last-update").innerText = "Update: " + new Date().toLocaleTimeString();
+        if (activeData.metrics) {
+            document.getElementById("metric-fps").innerText = (activeData.metrics.fps || 60) + " FPS";
+            document.getElementById("metric-ping").innerText = (activeData.metrics.ping || 50) + " ms";
+        }
+        renderInventoryGrid(activeData.items);
+    }
+
+    function renderInventoryGrid(itemsObj) {
         const grid = document.getElementById("item-grid");
         grid.innerHTML = "";
+        if (!itemsObj) {
+            document.getElementById("total-types").innerText = "0 Jenis Item";
+            return;
+        }
+
         const searchQuery = (document.getElementById("item-search-input").value || "").toLowerCase();
         let count = 0, visibleCount = 0;
-        for (const [itemName, itemData] of Object.entries(globalData.items || {})) {
+        
+        for (const [itemName, itemData] of Object.entries(itemsObj)) {
             count++;
             if (searchQuery && !itemName.toLowerCase().includes(searchQuery)) continue;
             visibleCount++;
@@ -205,70 +259,13 @@
         document.getElementById("total-types").innerText = visibleCount + " / " + count + " Jenis Item";
     }
 
-    async function updateCloudData() {
-        try {
-            await fetch(API_URL, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Master-Key": API_KEY
-                },
-                body: JSON.stringify(globalData)
-            });
-        } catch (e) { console.error("Update Error:", e); }
-    }
-
     async function sendScriptToGame() {
         const scriptText = document.getElementById("script-input").value.trim();
         if (!scriptText) return;
-        globalData.remoteScript = scriptText;
-        globalData.scriptTimestamp = Date.now();
-        document.getElementById("execution-log").innerText = "Status: Mengirim script ke cloud...";
-        await updateCloudData();
-        document.getElementById("execution-log").innerText = "Status: Script berhasil dikirim!";
+        document.getElementById("execution-log").innerText = "Status: Fitur remote script disesuaikan untuk multi-account.";
     }
 
-    function renderTargets() {
-        let listContainer = document.getElementById("target-list");
-        listContainer.innerHTML = "";
-        if (!globalData.targets) globalData.targets = [];
-        globalData.targets.forEach((username, index) => {
-            const item = document.createElement("div");
-            item.className = "target-item";
-            item.innerHTML = `👤 ${username} <button class="delete-btn" onclick="removeUsername(${index})">HAPUS</button>`;
-            listContainer.appendChild(item);
-        });
-    }
-
-    function renderDevices(isOnline) {
-        document.getElementById("device-table-body").innerHTML = `<tr><td><span class="account-name">${isOnline ? '🟢' : '🔴'} ${globalData.player || "Unknown"}</span></td><td class="shekles-val">${(globalData.shekles || 0).toLocaleString()}</td></tr>`;
-    }
-
-    async function addUsername() {
-        const input = document.getElementById("username-input");
-        const val = input.value.trim();
-        if (val) {
-            if (!globalData.targets) globalData.targets = [];
-            if (!globalData.targets.includes(val)) {
-                globalData.targets.push(val);
-                input.value = "";
-                renderTargets();
-                await updateCloudData();
-            }
-        }
-    }
-
-    async function removeUsername(index) {
-        if (globalData.targets) {
-            globalData.targets.splice(index, 1);
-            renderTargets();
-            await updateCloudData();
-        }
-    }
-
-    document.getElementById("username-input").addEventListener("keypress", function(e) { if(e.key === 'Enter') addUsername(); });
-    
-    setInterval(fetchData, 4000); // Polling web dipercepat menjadi setiap 4 detik
+    setInterval(fetchData, 4000);
     fetchData();
 </script>
 </body>
