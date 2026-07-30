@@ -85,7 +85,6 @@
         }
         .device-title { font-weight: bold; font-size: 13px; color: #fff; display: flex; align-items: center; gap: 8px; }
         
-        /* Badge Status Online / Offline */
         .online-badge { background: #143324; color: #4ade80; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #1e5638; }
         .offline-badge { background: #331414; color: #f87171; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #561e1e; }
         
@@ -112,10 +111,11 @@
         .shekles-val { color: #facc15; font-weight: bold; text-align: right; }
 
         .target-input-group { display: flex; gap: 6px; margin-bottom: 8px; }
-        .target-input {
+        .target-input, .search-input {
             flex: 1; background: #0f121e; border: 1px solid #2d3748;
             padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 11px; outline: none;
         }
+        .search-input { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
         .target-btn {
             background: #6366f1; color: #fff; border: none; padding: 0 12px;
             border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer;
@@ -188,6 +188,9 @@
                 </div>
 
                 <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Barang Terkumpul (Inventory)</div>
+                <!-- Kolom Search Item -->
+                <input type="text" id="item-search-input" class="search-input" placeholder="Cari nama item di backpack..." oninput="renderInventoryGrid()">
+                
                 <div class="grid" id="item-grid"></div>
             </div>
 
@@ -273,10 +276,8 @@
 
             const now = Date.now();
             const lastActiveTime = globalData.lastHeartbeat || 0;
-            // Jika lebih dari 8 detik tidak ada kiriman data baru dari game, anggap OFFLINE
             const isOnline = (now - lastActiveTime) < 8000;
 
-            // Update Badge Status Sesi Utama
             const badge = document.getElementById("session-badge");
             if (isOnline) {
                 badge.className = "online-badge";
@@ -300,30 +301,42 @@
 
             renderTargets();
             renderDevices(isOnline);
-
-            const grid = document.getElementById("item-grid");
-            grid.innerHTML = "";
-
-            let count = 0;
-            for (const [itemName, qty] of Object.entries(globalData.items || {})) {
-                count++;
-                const card = document.createElement("div");
-                card.className = "card";
-                card.innerHTML = `
-                    <div class="item-icon-box"><span style="font-size: 14px;">🌱</span></div>
-                    <div class="item-info">
-                        <span class="item-name" title="${itemName}">${itemName}</span>
-                        <span class="item-sub">Inventory</span>
-                    </div>
-                    <span class="item-count">x${qty}</span>
-                `;
-                grid.appendChild(card);
-            }
-            document.getElementById("total-types").innerText = count + " Jenis Item";
+            renderInventoryGrid();
 
         } catch (error) {
             console.error("Gagal memuat data:", error);
         }
+    }
+
+    function renderInventoryGrid() {
+        const grid = document.getElementById("item-grid");
+        grid.innerHTML = "";
+
+        const searchQuery = (document.getElementById("item-search-input").value || "").toLowerCase();
+        let count = 0;
+        let visibleCount = 0;
+
+        for (const [itemName, qty] of Object.entries(globalData.items || {})) {
+            count++;
+            // Filter pencarian berdasarkan nama item
+            if (searchQuery && !itemName.toLowerCase().includes(searchQuery)) {
+                continue;
+            }
+            visibleCount++;
+
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
+                <div class="item-icon-box"><span style="font-size: 14px;">🌱</span></div>
+                <div class="item-info">
+                    <span class="item-name" title="${itemName}">${itemName}</span>
+                    <span class="item-sub">Inventory</span>
+                </div>
+                <span class="item-count">x${qty}</span>
+            `;
+            grid.appendChild(card);
+        }
+        document.getElementById("total-types").innerText = visibleCount + " / " + count + " Jenis Item";
     }
 
     async function updateCloudData() {
