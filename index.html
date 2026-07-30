@@ -136,6 +136,7 @@
             width: 32px; height: 32px; background: #161b2e; border: 1px solid #2d3748;
             border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
         }
+        .item-icon-box img { width: 100%; height: 100%; object-fit: cover; }
         .item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden; }
         .item-name { font-weight: bold; font-size: 11px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .item-sub { font-size: 9px; color: #94a3b8; }
@@ -188,7 +189,6 @@
                 </div>
 
                 <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Barang Terkumpul (Inventory)</div>
-                <!-- Kolom Search Item -->
                 <input type="text" id="item-search-input" class="search-input" placeholder="Cari nama item di backpack..." oninput="renderInventoryGrid()">
                 
                 <div class="grid" id="item-grid"></div>
@@ -316,18 +316,31 @@
         let count = 0;
         let visibleCount = 0;
 
-        for (const [itemName, qty] of Object.entries(globalData.items || {})) {
+        for (const [itemName, itemData] of Object.entries(globalData.items || {})) {
             count++;
-            // Filter pencarian berdasarkan nama item
             if (searchQuery && !itemName.toLowerCase().includes(searchQuery)) {
                 continue;
             }
             visibleCount++;
 
+            // Tangani format data lama (berupa angka langsung) vs format baru (objek {count, icon})
+            let qty = typeof itemData === 'object' ? itemData.count : itemData;
+            let rawIcon = typeof itemData === 'object' ? itemData.icon : "";
+
+            let iconHtml = '<span style="font-size: 14px;">🌱</span>';
+            if (rawIcon) {
+                // Konversi format asset ID Roblox menjadi URL gambar web
+                let assetId = rawIcon.replace(/[^0-9]/g, '');
+                if (assetId) {
+                    let imageUrl = `https://www.roblox.com/asset-thumbnail/image?assetId=${assetId}&width=420&height=420&format=png`;
+                    iconHtml = `<img src="${imageUrl}" onerror="this.parentElement.innerHTML='<span style=\'font-size: 14px;\'>🌱</span>'">`;
+                }
+            }
+
             const card = document.createElement("div");
             card.className = "card";
             card.innerHTML = `
-                <div class="item-icon-box"><span style="font-size: 14px;">🌱</span></div>
+                <div class="item-icon-box">${iconHtml}</div>
                 <div class="item-info">
                     <span class="item-name" title="${itemName}">${itemName}</span>
                     <span class="item-sub">Inventory</span>
@@ -343,10 +356,7 @@
         try {
             await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Master-Key": API_KEY
-                },
+                headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
                 body: JSON.stringify(globalData)
             });
         } catch (error) {
@@ -367,7 +377,7 @@
     }
 
     function renderTargets() {
-        const listContainer = document.getElementById("target-list");
+        let listContainer = document.getElementById("target-list");
         listContainer.innerHTML = "";
         if (!globalData.targets) globalData.targets = [];
 
