@@ -1,11 +1,11 @@
-<!-- Bagian Tampilan Tombol di Web -->
-<div style="background: #161b2e; padding: 15px; border-radius: 10px; width: 250px; font-family: sans-serif;">
+<!-- Bagian Tampilan Tombol & Log di Web -->
+<div style="background: #161b2e; padding: 15px; border-radius: 10px; width: 280px; font-family: sans-serif; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
     <h3 style="color: #4ade80; margin-top: 0; font-size: 14px;">🎮 Device Control Panel</h3>
-    <button id="openRobloxBtn" onclick="sendOpenCommand()" style="background: #3b82f6; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">Buka Roblox (pacew9)</button>
-    <p id="statusLog" style="color: #38bdf8; font-size: 11px; margin-top: 8px; margin-bottom: 0;">Status: Siap</p>
+    <button id="openRobloxBtn" onclick="sendOpenCommand()" style="background: #3b82f6; color: white; border: none; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.2s;">Buka Roblox (pacew9)</button>
+    <p id="statusLog" style="color: #38bdf8; font-size: 11px; margin-top: 10px; margin-bottom: 0;">Status: Siap mengirim perintah...</p>
 </div>
 
-<!-- Bagian Skrip JavaScript untuk Mengirim Perintah -->
+<!-- Bagian Skrip JavaScript Lengkap dengan Penanganan Error CORS & Server -->
 <script>
 const BIN_ID = "6a6aba72da38895dfea25258";
 const API_KEY = "$2a$10$ERw5fC9bbSp9uFZOfMSSBe/JMRlA6u0xMsbEaI3qmBmP3noMd8LkW";
@@ -13,27 +13,38 @@ const URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
 async function sendOpenCommand() {
     const logEl = document.getElementById("statusLog");
-    logEl.innerText = "Mengirim perintah ke perangkat...";
+    logEl.style.color = "#38bdf8";
+    logEl.innerText = "Menghubungkan ke server cloud...";
 
     try {
-        // 1. Ambil data database terbaru agar data akun lain tidak tertimpa/hilang
+        // 1. Ambil data terbaru dari JSONBin
         let getRes = await fetch(URL, {
             method: "GET",
-            headers: { "X-Master-Key": API_KEY }
+            headers: { 
+                "X-Master-Key": API_KEY,
+                "X-Bin-Meta": "false" 
+            }
         });
         
+        if (!getRes.ok) {
+            throw new Error(`HTTP Error GET: ${getRes.status}`);
+        }
+
         let getData = await getRes.json();
-        let record = getData.record || {};
+        // JSONBin v3 terkadang membungkus data di dalam key 'record'
+        let record = getData.record || getData;
         
-        // Pastikan struktur objek commands tersedia
+        // Pastikan objek commands tersedia di dalam struktur data
         if (!record.commands) {
             record.commands = {};
         }
 
-        // 2. Berikan perintah OPEN khusus untuk target akun "pacew9"
+        // 2. Ubah status command untuk target akun menjadi OPEN
         record.commands["pacew9"] = "OPEN";
 
-        // 3. Simpan kembali perubahan perintah tersebut ke JSONBin
+        logEl.innerText = "Mengirim sinyal OPEN...";
+
+        // 3. Kirim kembali pembaruan data ke JSONBin
         let putRes = await fetch(URL, {
             method: "PUT",
             headers: {
@@ -44,13 +55,17 @@ async function sendOpenCommand() {
         });
 
         if (putRes.ok) {
+            logEl.style.color = "#4ade80";
             logEl.innerText = "Perintah OPEN terkirim! Menunggu Daemon HP...";
         } else {
-            logEl.innerText = "Gagal mengirim perintah ke server.";
+            let errorText = await putRes.text();
+            throw new Error(`Gagal PUT (${putRes.status}): ${errorText}`);
         }
+
     } catch (error) {
-        console.error(error);
-        logEl.innerText = "Terjadi kesalahan jaringan.";
+        console.error("Detail Error:", error);
+        logEl.style.color = "#ef4444";
+        logEl.innerText = "Gagal: " + error.message;
     }
 }
 </script>
