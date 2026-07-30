@@ -1,6 +1,6 @@
 -- Konfigurasi Koneksi Cloud
 local BIN_ID = "6a6b4a70f5f4af5e29d5a623"
-local API_KEY = "$2a$10$SQCp/OkqnUEfVA1EYKrwuRqgrZIXz07G1tdoF2aUqj.a9134zV8K." -- Pastikan API key sesuai akun Anda
+local API_KEY = "$2a$10$SQCp/OkqnUEfVA1EYKrwuRqgrZIXz07G1tdoF2aUqj.a9134zV8K."
 local URL = "https://api.jsonbin.io/v3/b/" .. BIN_ID
 
 local HttpService = game:GetService("HttpService")
@@ -94,7 +94,7 @@ ToggleBtn.Text = "Status: AKTIF (ON)"
 ToggleBtn.Parent = MainFrame
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
 
--- === FUNGSI SINKRONISASI CLOUD DENGAN PEMETAAN 'Shekles' ===
+-- === FUNGSI SINKRONISASI CLOUD DENGAN PENCARIAN INVENTORY LANJUTAN ===
 local isSyncActive = true
 
 local function updateCloud(removeAccount)
@@ -124,16 +124,14 @@ local function updateCloud(removeAccount)
             if removeAccount then
                 currentAccounts[AccountKey] = nil
             else
-                -- Ambil nilai Shekles secara spesifik dari leaderstats
+                -- 1. Ambil Shekles
                 local sheklesValue = 0
                 local ls = LocalPlayer:FindFirstChild("leaderstats")
                 if ls then
-                    -- Cari berdasarkan nama "Shekles" atau ambil IntValue/NumberValue pertama
                     local sTarget = ls:FindFirstChild("Shekles") or ls:FindFirstChild("Money") or ls:FindFirstChild("Cash")
                     if sTarget and (sTarget:IsA("IntValue") or sTarget:IsA("NumberValue")) then
                         sheklesValue = sTarget.Value
                     else
-                        -- Fallback jika namanya berbeda, cari nilai angka pertama
                         for _, s in ipairs(ls:GetChildren()) do
                             if s:IsA("IntValue") or s:IsA("NumberValue") then
                                 sheklesValue = s.Value
@@ -143,25 +141,47 @@ local function updateCloud(removeAccount)
                     end
                 end
 
-                -- Ambil data Inventory / Backpack
+                -- 2. Ambil Inventory dengan Pencarian Menyeluruh (Backpack + Folder Penyimpanan Lain)
                 local inventoryData = {}
+                
+                -- Cek Backpack standar
                 local backpack = LocalPlayer:FindFirstChild("Backpack")
                 if backpack then
                     for _, item in ipairs(backpack:GetChildren()) do
                         inventoryData[item.Name] = (inventoryData[item.Name] or 0) + 1
                     end
                 end
+
+                -- Cek Character (jika ada item yang sedang dipegang/diberikan atribut)
+                local character = LocalPlayer.Character
+                if character then
+                    for _, item in ipairs(character:GetChildren()) do
+                        if item:IsA("Tool") then
+                            inventoryData[item.Name] = (inventoryData[item.Name] or 0) + 1
+                        end
+                    end
+                end
+
+                -- Cek folder khusus inventory di dalam Player (jika ada)
+                for _, child in ipairs(LocalPlayer:GetChildren()) do
+                    if child:IsA("Folder") or child:IsA("Model") then
+                        if child.Name:lower():find("inventory") or child.Name:lower():find("bag") or child.Name:lower():find("storage") or child.Name:lower():find("items") then
+                            for _, item in ipairs(child:GetChildren()) do
+                                inventoryData[item.Name] = (inventoryData[item.Name] or 0) + (item.Value or 1)
+                            end
+                        end
+                    end
+                end
                 
-                -- Format data akun yang dikirim agar cocok dengan dashboard website
+                -- Kirim paket data akun
                 currentAccounts[AccountKey] = {
                     LastUpdate = os.time(),
-                    Shekles = sheklesValue,       -- Variabel khusus Shekles untuk web
+                    Shekles = sheklesValue,
                     Stats = { Shekles = sheklesValue },
                     Inventory = inventoryData
                 }
             end
             
-            -- Kirim pembaruan ke JSONBin
             httpRequest({
                 Url = URL,
                 Method = "PUT",
@@ -179,7 +199,6 @@ local function updateCloud(removeAccount)
 end
 
 -- === INTERAKSI TOMBOL GUI ===
-
 CloseBtn.MouseButton1Click:Connect(function()
     updateCloud(true) 
     ScreenGui:Destroy()
@@ -215,7 +234,7 @@ ToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Jalankan sinkronisasi otomatis berkala tiap 5 detik agar data Shekles/Inventory terus terupdate ke web
+-- Auto-sync tiap 5 detik
 task.spawn(function()
     while true do
         if isSyncActive then
