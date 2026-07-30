@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -285,18 +284,18 @@
             const result = await response.json();
             globalData = result.record;
 
-            const now = Date.now();
-            const lastActiveTime = globalData.lastHeartbeat || 0;
-            const isOnline = (now - lastActiveTime) < 10000; // Toleransi waktu 10 detik
-
             const badge = document.getElementById("session-badge");
             
-            // JIKA OFFLINE / TERPUTUS: Bersihkan semua elemen secara total
+            // Toleransi waktu online diperbesar hingga 60 detik (mengatasi selisih waktu perangkat/server)
+            const now = Date.now();
+            const lastActiveTime = globalData.lastHeartbeat || 0;
+            const isOnline = globalData.player && globalData.player !== "" && (now - lastActiveTime < 60000);
+
+            // JIKA OFFLINE / TERPUTUS:
             if (!isOnline) {
                 badge.className = "offline-badge";
                 badge.innerText = "○ Offline";
                 
-                // Reset data global
                 globalData.items = {};
                 globalData.shekles = 0;
                 globalData.player = "Offline";
@@ -309,7 +308,6 @@
                 document.getElementById("metric-ping").innerText = "0 ms";
                 document.getElementById("total-types").innerText = "0 Jenis Item";
                 
-                // Kosongkan grid inventory dan tabel shekles secara paksa
                 document.getElementById("item-grid").innerHTML = "";
                 document.getElementById("device-table-body").innerHTML = `
                     <tr>
@@ -445,4 +443,4 @@
             <td>
                 <div style="display: flex; flex-direction: column;">
                     <span class="account-name">${isOnline ? '🟢' : '🔴'} ${globalData.player || "Unknown"}</span>
-                    <span style="font-size: 9px; col
+                    <span style="font-size: 9px; color: #94a3b8;">${isO
