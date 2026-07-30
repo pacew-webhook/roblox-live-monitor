@@ -286,12 +286,11 @@
 
             const badge = document.getElementById("session-badge");
             
-            // Toleransi waktu online diperbesar hingga 60 detik (mengatasi selisih waktu perangkat/server)
             const now = Date.now();
             const lastActiveTime = globalData.lastHeartbeat || 0;
+            // Toleransi waktu online diperbesar hingga 60 detik untuk mencegah selisih waktu perangkat
             const isOnline = globalData.player && globalData.player !== "" && (now - lastActiveTime < 60000);
 
-            // JIKA OFFLINE / TERPUTUS:
             if (!isOnline) {
                 badge.className = "offline-badge";
                 badge.innerText = "○ Offline";
@@ -323,7 +322,6 @@
                 return;
             }
 
-            // JIKA ONLINE: Tampilkan data normal
             badge.className = "online-badge";
             badge.innerText = "● Online";
 
@@ -398,7 +396,10 @@
         try {
             await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "X-Master-Key": API_KEY 
+                },
                 body: JSON.stringify(globalData)
             });
         } catch (error) {
@@ -443,4 +444,4 @@
             <td>
                 <div style="display: flex; flex-direction: column;">
                     <span class="account-name">${isOnline ? '🟢' : '🔴'} ${globalData.player || "Unknown"}</span>
-                    <span style="font-size: 9px; color: #94a3b8;">${isO
+                    <span style="font-size: 9px; color: #94a3b8;">${isOnline ? 'Dalam Game' : 'Offline'}</
