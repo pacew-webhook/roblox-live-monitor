@@ -84,7 +84,10 @@
             padding-bottom: 8px;
         }
         .device-title { font-weight: bold; font-size: 13px; color: #fff; display: flex; align-items: center; gap: 8px; }
+        
+        /* Badge Status Online / Offline */
         .online-badge { background: #143324; color: #4ade80; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #1e5638; }
+        .offline-badge { background: #331414; color: #f87171; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #561e1e; }
         
         .metrics-grid {
             display: grid;
@@ -100,17 +103,14 @@
         .metric-value.fps { color: #38bdf8; }
         .metric-value.ping { color: #facc15; }
 
-        /* SHEKLESS LIST PANEL (KANAN) */
         .shekles-panel-title { font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; display: flex; justify-content: space-between; }
         .table-container { max-height: 380px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
         th, td { padding: 6px 8px; border-bottom: 1px solid #2d3748; }
         th { color: #94a3b8; font-weight: 600; background: #161b2e; position: sticky; top: 0; }
-        .status-ingame { background: #143324; color: #4ade80; padding: 2px 4px; border-radius: 3px; font-size: 9px; font-weight: bold; }
         .account-name { font-weight: bold; color: #e2e8f0; }
         .shekles-val { color: #facc15; font-weight: bold; text-align: right; }
 
-        /* INPUT TARGET */
         .target-input-group { display: flex; gap: 6px; margin-bottom: 8px; }
         .target-input {
             flex: 1; background: #0f121e; border: 1px solid #2d3748;
@@ -127,7 +127,6 @@
         }
         .delete-btn { background: #7f1d1d; color: #fca5a5; border: none; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; }
 
-        /* INVENTORY GRID KIRI */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
         .card {
             background: #1e2640; border: 1px solid #2d3748; padding: 8px 10px;
@@ -137,7 +136,6 @@
             width: 32px; height: 32px; background: #161b2e; border: 1px solid #2d3748;
             border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
         }
-        .item-icon-box img { width: 100%; height: 100%; object-fit: cover; }
         .item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden; }
         .item-name { font-weight: bold; font-size: 11px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .item-sub { font-size: 9px; color: #94a3b8; }
@@ -146,7 +144,6 @@
             border-radius: 6px; font-weight: bold; font-size: 11px; border: 1px solid #1e5638; flex-shrink: 0;
         }
 
-        /* SCRIPT HUB */
         .script-box { background: #1e2640; border: 1px solid #2d3748; border-radius: 8px; padding: 15px; }
         .script-textarea {
             width: 100%; height: 180px; background: #0f121e; border: 1px solid #2d3748;
@@ -180,7 +177,6 @@
         </div>
 
         <div class="main-layout">
-            <!-- SISI KIRI (Grid Item & Target) -->
             <div>
                 <div class="target-section">
                     <div class="target-title" style="font-size: 11px; font-weight: bold; color: #94a3b8; margin-bottom: 6px;">Target Username (Penerima)</div>
@@ -191,17 +187,16 @@
                     <div class="target-list" id="target-list"></div>
                 </div>
 
-                <div class="packages-title" style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Barang Terkumpul (Inventory)</div>
+                <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Barang Terkumpul (Inventory)</div>
                 <div class="grid" id="item-grid"></div>
             </div>
 
-            <!-- SISI KANAN (Panel Shekles & Metrics) -->
             <div>
                 <div class="device-section">
                     <div class="device-header">
                         <div class="device-title">
                             <span>Sesi Delta</span>
-                            <span class="online-badge">● Online</span>
+                            <span id="session-badge" class="online-badge">● Online</span>
                         </div>
                     </div>
 
@@ -220,7 +215,7 @@
                 <div class="shekles-section">
                     <div class="shekles-panel-title">
                         <span>Accounts & Shekles List</span>
-                        <span style="color: #4ade80;" id="online-count">1/1 Online</span>
+                        <span style="color: #4ade80;" id="online-count">0/1 Online</span>
                     </div>
                     <div class="table-container">
                         <table>
@@ -253,7 +248,7 @@
     const BIN_ID = "6a6a3b9ff5f4af5e29d235de";
     const API_KEY = "$2a$10$ap1SNJRB2ssxoZgyZpzZHecTkYxsSNtk7ipBxo6WjTCGYtjsUugyC";
 
-    let globalData = { player: "", shekles: 0, items: {}, targets: [], devices: [], metrics: {}, remoteScript: "", scriptTimestamp: 0 };
+    let globalData = { player: "", shekles: 0, items: {}, targets: [], devices: [], metrics: {}, remoteScript: "", scriptTimestamp: 0, lastHeartbeat: 0 };
 
     function switchTab(tabName) {
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -276,16 +271,35 @@
             const result = await response.json();
             globalData = result.record;
 
+            const now = Date.now();
+            const lastActiveTime = globalData.lastHeartbeat || 0;
+            // Jika lebih dari 8 detik tidak ada kiriman data baru dari game, anggap OFFLINE
+            const isOnline = (now - lastActiveTime) < 8000;
+
+            // Update Badge Status Sesi Utama
+            const badge = document.getElementById("session-badge");
+            if (isOnline) {
+                badge.className = "online-badge";
+                badge.innerText = "● Online";
+            } else {
+                badge.className = "offline-badge";
+                badge.innerText = "○ Offline";
+            }
+
+            document.getElementById("online-count").innerText = isOnline ? "1/1 Online" : "0/1 Online";
             document.getElementById("player-name").innerText = "Player Utama: " + (globalData.player || "Unknown");
             document.getElementById("last-update").innerText = "Update: " + new Date().toLocaleTimeString();
 
-            if (globalData.metrics) {
+            if (globalData.metrics && isOnline) {
                 document.getElementById("metric-fps").innerText = (globalData.metrics.fps || 60) + " FPS";
                 document.getElementById("metric-ping").innerText = (globalData.metrics.ping || 50) + " ms";
+            } else {
+                document.getElementById("metric-fps").innerText = "0 FPS";
+                document.getElementById("metric-ping").innerText = "0 ms";
             }
 
             renderTargets();
-            renderDevices();
+            renderDevices(isOnline);
 
             const grid = document.getElementById("item-grid");
             grid.innerHTML = "";
@@ -293,15 +307,10 @@
             let count = 0;
             for (const [itemName, qty] of Object.entries(globalData.items || {})) {
                 count++;
-                
-                // Membuat ikon dinamis menggunakan placeholder / placeholder ikon huruf inisial atau generator icon game
-                // Menggunakan emoji atau placeholder visual yang rapi
                 const card = document.createElement("div");
                 card.className = "card";
                 card.innerHTML = `
-                    <div class="item-icon-box">
-                        <span style="font-size: 14px;">🌱</span>
-                    </div>
+                    <div class="item-icon-box"><span style="font-size: 14px;">🌱</span></div>
                     <div class="item-info">
                         <span class="item-name" title="${itemName}">${itemName}</span>
                         <span class="item-sub">Inventory</span>
@@ -360,28 +369,21 @@
         });
     }
 
-    function renderDevices() {
+    function renderDevices(isOnline) {
         const tbody = document.getElementById("device-table-body");
         tbody.innerHTML = "";
-        const devices = globalData.devices && globalData.devices.length > 0 ? globalData.devices : [{
-            username: globalData.player || "Unknown",
-            shekles: globalData.shekles || 0,
-            status: "Dalam Game"
-        }];
-
-        devices.forEach((dev) => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>
-                    <div style="display: flex; flex-direction: column;">
-                        <span class="account-name">🟢 ${dev.username || globalData.player}</span>
-                        <span style="font-size: 9px; color: #94a3b8;">${dev.status || "Dalam Game"}</span>
-                    </div>
-                </td>
-                <td class="shekles-val">${(dev.shekles || globalData.shekles || 0).toLocaleString()}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+        
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>
+                <div style="display: flex; flex-direction: column;">
+                    <span class="account-name">${isOnline ? '🟢' : '🔴'} ${globalData.player || "Unknown"}</span>
+                    <span style="font-size: 9px; color: #94a3b8;">${isOnline ? 'Dalam Game' : 'Offline'}</span>
+                </div>
+            </td>
+            <td class="shekles-val">${(globalData.shekles || 0).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
     }
 
     async function addUsername() {
