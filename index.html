@@ -42,7 +42,7 @@
         .item-icon-box { width: 32px; height: 32px; background: #161b2e; border: 1px solid #2d3748; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
         .item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden; }
         .item-name { font-weight: bold; font-size: 11px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-sub { font-size: 9px; color: #94a3b8; }
+        .item-sub { font-size: 9px; color: #facc15; }
         .item-count { background: #143324; color: #4ade80; padding: 3px 6px; border-radius: 6px; font-weight: bold; font-size: 11px; border: 1px solid #1e5638; flex-shrink: 0; }
         .script-box { background: #1e2640; border: 1px solid #2d3748; border-radius: 8px; padding: 15px; }
         .script-textarea { width: 100%; height: 180px; background: #0f121e; border: 1px solid #2d3748; color: #4ade80; font-family: monospace; padding: 10px; border-radius: 6px; font-size: 12px; outline: none; box-sizing: border-box; }
@@ -195,14 +195,32 @@
         grid.innerHTML = "";
         const searchQuery = (document.getElementById("item-search-input").value || "").toLowerCase();
         let count = 0, visibleCount = 0;
+        
         for (const [itemName, itemData] of Object.entries(globalData.items || {})) {
             count++;
             if (searchQuery && !itemName.toLowerCase().includes(searchQuery)) continue;
             visibleCount++;
-            let qty = (typeof itemData === 'object' && itemData !== null) ? (itemData.count || 1) : itemData;
+            
+            let qty = 1;
+            let itemVal = 0;
+            
+            if (typeof itemData === 'object' && itemData !== null) {
+                qty = itemData.count || 1;
+                itemVal = itemData.value || 0;
+            } else {
+                qty = itemData;
+            }
+
             const card = document.createElement("div");
             card.className = "card";
-            card.innerHTML = `<div class="item-icon-box"><span style="font-size: 14px;">🌱</span></div><div class="item-info"><span class="item-name">${itemName}</span><span class="item-sub">Inventory</span></div><span class="item-count">x${qty}</span>`;
+            card.innerHTML = `
+                <div class="item-icon-box"><span style="font-size: 14px;">🌱</span></div>
+                <div class="item-info">
+                    <span class="item-name">${itemName}</span>
+                    <span class="item-sub">Value: ${itemVal.toLocaleString()}</span>
+                </div>
+                <span class="item-count">x${qty}</span>
+            `;
             grid.appendChild(card);
         }
         document.getElementById("total-types").innerText = visibleCount + " / " + count + " Jenis Item";
