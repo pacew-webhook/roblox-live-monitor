@@ -119,10 +119,8 @@
     </div>
 </div>
 <script>
-    // Konfigurasi JSONBin.io Anda
     const BIN_ID = "6a6ab3abf5f4af5e29d3b9d7";
-    const API_KEY = "$2a$10$ERw5fC9bbSp9uFZOfMSSBe/JMRlA6u0xMsbEaI3qmBmP3noMd8LkW"; // Contoh: $2a$10$...
-
+    const API_KEY = "$2a$10$ERw5fC9bbSp9uFZOfMSSBe/JMRlA6u0xMsbEaI3qmBmP3noMd8LkW";
     const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
     let globalData = { player: "", shekles: 0, items: {}, targets: [], devices: [], metrics: {}, remoteScript: "", scriptTimestamp: 0, lastHeartbeat: 0 };
@@ -144,7 +142,8 @@
             const response = await fetch(API_URL, {
                 method: "GET",
                 headers: {
-                    "X-Master-Key": API_KEY
+                    "X-Master-Key": API_KEY,
+                    "Cache-Control": "no-cache"
                 }
             });
             if (!response.ok) return;
@@ -155,13 +154,15 @@
             const badge = document.getElementById("session-badge");
             const now = Date.now();
             const lastActiveTime = globalData.lastHeartbeat || 0;
-            const isOnline = globalData.player && globalData.player !== "" && (now - lastActiveTime < 60000);
+            
+            // Tenggang waktu heartbeat dilonggarkan jadi 5 menit (300000 ms) agar stabil
+            const isOnline = globalData.player && globalData.player !== "" && (now - lastActiveTime < 300000);
 
             if (!isOnline) {
                 badge.className = "offline-badge"; badge.innerText = "○ Offline";
                 document.getElementById("online-count").innerText = "0/1 Online";
-                document.getElementById("player-name").innerText = "Player Utama: Offline / Tidak Terhubung";
-                document.getElementById("last-update").innerText = "Status: Terputus";
+                document.getElementById("player-name").innerText = "Player Utama: Menunggu Sesi Delta...";
+                document.getElementById("last-update").innerText = "Status: Belum Terdeteksi Aktif";
                 document.getElementById("metric-fps").innerText = "0 FPS";
                 document.getElementById("metric-ping").innerText = "0 ms";
                 document.getElementById("total-types").innerText = "0 Jenis Item";
@@ -182,7 +183,7 @@
             renderDevices(true);
             renderInventoryGrid();
         } catch (e) {
-            console.error(e);
+            console.error("Fetch Error:", e);
         }
     }
 
@@ -214,7 +215,7 @@
                 },
                 body: JSON.stringify(globalData)
             });
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Update Error:", e); }
     }
 
     async function sendScriptToGame() {
@@ -234,7 +235,7 @@
         globalData.targets.forEach((username, index) => {
             const item = document.createElement("div");
             item.className = "target-item";
-            item.innerHTML = `<span>👤 ${username}</span><button class="delete-btn" onclick="removeUsername(${index})">HAPUS</button>`;
+            item.innerHTML = `👤 ${username} <button class="delete-btn" onclick="removeUsername(${index})">HAPUS</button>`;
             listContainer.appendChild(item);
         });
     }
@@ -267,8 +268,7 @@
 
     document.getElementById("username-input").addEventListener("keypress", function(e) { if(e.key === 'Enter') addUsername(); });
     
-    // Poling diperlambat menjadi setiap 10 detik agar kuota JSONBin tidak cepat habis
-    setInterval(fetchData, 10000);
+    setInterval(fetchData, 4000); // Polling web dipercepat menjadi setiap 4 detik
     fetchData();
 </script>
 </body>
