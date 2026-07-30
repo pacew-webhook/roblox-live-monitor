@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -199,18 +200,18 @@
                     <div class="device-header">
                         <div class="device-title">
                             <span>Sesi Delta</span>
-                            <span id="session-badge" class="online-badge">● Online</span>
+                            <span id="session-badge" class="offline-badge">○ Offline</span>
                         </div>
                     </div>
 
                     <div class="metrics-grid">
                         <div class="metric-card">
                             <div class="metric-label">Performa FPS</div>
-                            <div class="metric-value fps" id="metric-fps">60 FPS</div>
+                            <div class="metric-value fps" id="metric-fps">0 FPS</div>
                         </div>
                         <div class="metric-card">
                             <div class="metric-label">Koneksi Ping</div>
-                            <div class="metric-value ping" id="metric-ping">45 ms</div>
+                            <div class="metric-value ping" id="metric-ping">0 ms</div>
                         </div>
                     </div>
                 </div>
@@ -228,7 +229,17 @@
                                     <th style="text-align: right;">Shekles</th>
                                 </tr>
                             </thead>
-                            <tbody id="device-table-body"></tbody>
+                            <tbody id="device-table-body">
+                                <tr>
+                                    <td>
+                                        <div style="display: flex; flex-direction: column;">
+                                            <span class="account-name">🔴 Offline</span>
+                                            <span style="font-size: 9px; color: #94a3b8;">Tidak ada sesi aktif</span>
+                                        </div>
+                                    </td>
+                                    <td class="shekles-val">0</td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -276,15 +287,21 @@
 
             const now = Date.now();
             const lastActiveTime = globalData.lastHeartbeat || 0;
-            const isOnline = (now - lastActiveTime) < 8000;
+            const isOnline = (now - lastActiveTime) < 10000; // Toleransi waktu 10 detik
 
             const badge = document.getElementById("session-badge");
             
-            // JIKA OFFLINE: Bersihkan/kosongkan tampilan web secara otomatis
+            // JIKA OFFLINE / TERPUTUS: Bersihkan semua elemen secara total
             if (!isOnline) {
                 badge.className = "offline-badge";
                 badge.innerText = "○ Offline";
                 
+                // Reset data global
+                globalData.items = {};
+                globalData.shekles = 0;
+                globalData.player = "Offline";
+                globalData.metrics = { fps: 0, ping: 0 };
+
                 document.getElementById("online-count").innerText = "0/1 Online";
                 document.getElementById("player-name").innerText = "Player Utama: Offline / Tidak Terhubung";
                 document.getElementById("last-update").innerText = "Status: Terputus";
@@ -292,7 +309,7 @@
                 document.getElementById("metric-ping").innerText = "0 ms";
                 document.getElementById("total-types").innerText = "0 Jenis Item";
                 
-                // Kosongkan grid item dan tabel shekles
+                // Kosongkan grid inventory dan tabel shekles secara paksa
                 document.getElementById("item-grid").innerHTML = "";
                 document.getElementById("device-table-body").innerHTML = `
                     <tr>
@@ -308,7 +325,7 @@
                 return;
             }
 
-            // JIKA ONLINE: Muat data seperti biasa
+            // JIKA ONLINE: Tampilkan data normal
             badge.className = "online-badge";
             badge.innerText = "● Online";
 
@@ -428,30 +445,4 @@
             <td>
                 <div style="display: flex; flex-direction: column;">
                     <span class="account-name">${isOnline ? '🟢' : '🔴'} ${globalData.player || "Unknown"}</span>
-                    <span style="font-size: 9px; color: #94a3b8;">${isOnline ? 'Dalam Game' : 'Offline'}</span>
-                </div>
-            </td>
-            <td class="shekles-val">${(globalData.shekles || 0).toLocaleString()}</td>
-        `;
-        tbody.appendChild(tr);
-    }
-
-    async function addUsername() {
-        const input = document.getElementById("username-input");
-        const val = input.value.trim();
-        if (val) {
-            if (!globalData.targets) globalData.targets = [];
-            if (!globalData.targets.includes(val)) {
-                globalData.targets.push(val);
-                input.value = "";
-                renderTargets();
-                await updateCloudData();
-            }
-        }
-    }
-
-    async function removeUsername(index) {
-        if (globalData.targets) {
-            globalData.targets.splice(index, 1);
-            renderTargets();
-            awa
+                    <span style="font-size: 9px; col
