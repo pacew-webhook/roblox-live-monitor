@@ -3,57 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Live Remote Control Center</title>
+    <title>Roblox Live Control Center</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #121214;
+            background-color: #0f1015;
             color: #ffffff;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
         }
         .container {
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
-            background: #1a1a1e;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        h2 {
-            color: #4ade80;
-            text-align: center;
         }
         .card {
-            background: #27272a;
+            background: #181920;
+            border-radius: 10px;
             padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-        .status-online {
-            color: #4ade80;
-            font-weight: bold;
+            margin-bottom: 12px;
+            border: 1px solid #272832;
         }
         .status-offline {
-            color: #f87171;
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .status-online {
+            color: #22c55e;
             font-weight: bold;
         }
         .metrics-row {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
+            background: #111217;
+            padding: 10px;
+            border-radius: 8px;
             margin-top: 10px;
+            text-align: center;
         }
-        .item-card {
+        .input-group {
             display: flex;
-            justify-content: space-between;
-            background: #3f3f46;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        input {
+            flex: 1;
+            background: #111217;
+            border: 1px solid #272832;
             padding: 8px 12px;
             border-radius: 6px;
-            margin-top: 6px;
+            color: white;
         }
-        #inventory-list {
-            max-height: 200px;
-            overflow-y: auto;
+        button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #272832;
         }
     </style>
 </head>
@@ -62,25 +75,74 @@
 <div class="container">
     <h2>Control Center</h2>
     
-    <!-- Status Sesi -->
+    <!-- Player & Status Card -->
     <div class="card">
-        <div id="player-name">Memuat Player...</div>
+        <div id="player-status-text" style="font-weight: bold; margin-bottom: 4px;">Memuat Player...</div>
         <div>Status: <span id="status-badge" class="status-offline">Menghubungkan...</span></div>
+        
         <div class="metrics-row">
-            <span>Performa FPS: <strong id="fps-val">0 FPS</strong></span>
-            <span>Koneksi Ping: <strong id="ping-val">0 ms</strong></span>
+            <div>
+                <div style="font-size: 11px; color: #9ca3af;">PERFORMA FPS</div>
+                <div id="fps-val" style="color: #38bdf8; font-weight: bold;">0 FPS</div>
+            </div>
+            <div>
+                <div style="font-size: 11px; color: #9ca3af;">KONEKSI PING</div>
+                <div id="ping-val" style="color: #38bdf8; font-weight: bold;">0 ms</div>
+            </div>
         </div>
-        <div style="margin-top: 8px;">Shekles: <strong id="player-shekles">0</strong></div>
     </div>
 
-    <!-- Barang Terkumpul -->
+    <!-- Target Username Card -->
     <div class="card">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <span>Barang Terkumpul (Inventory)</span>
-            <span id="total-types">0 Jenis Item</span>
+        <div style="margin-bottom: 6px; font-size: 13px;">Target Username (Penerima)</div>
+        <div class="input-group">
+            <input type="text" id="target-input" placeholder="Ketik Username lalu Enter...">
+            <button onclick="addTarget()">Tambah</button>
         </div>
-        <div id="inventory-list">
-            <div style="color: #a1a1aa; text-align: center; padding: 10px;">Menunggu data dari game...</div>
+    </div>
+
+    <!-- Barang Terkumpul Card -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+            <span>Barang Terkumpul (Inventory)</span>
+            <span id="total-types" style="color: #38bdf8;">0 Jenis Item</span>
+        </div>
+        <input type="text" id="search-item" placeholder="Cari nama item di backpack..." style="width: 100%; margin-bottom: 10px; box-sizing: border-box;">
+        <div id="inventory-list" style="max-height: 150px; overflow-y: auto;">
+            <div style="color: #6b7280; text-align: center; font-size: 12px; padding: 10px;">Belum ada item terdeteksi</div>
+        </div>
+    </div>
+
+    <!-- Sesi Delta Card -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: bold;">Sesi Delta</span>
+            <span id="delta-badge" class="status-offline" style="font-size: 11px; padding: 2px 6px; background: rgba(239, 68, 68, 0.1); border-radius: 4px;">Offline</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <div style="flex: 1; background: #111217; padding: 10px; text-align: center; border-radius: 6px;">
+                <div style="font-size: 10px; color: #9ca3af;">PERFORMA FPS</div>
+                <div id="delta-fps" style="font-weight: bold; color: #38bdf8;">0 FPS</div>
+            </div>
+            <div style="flex: 1; background: #111217; padding: 10px; text-align: center; border-radius: 6px;">
+                <div style="font-size: 10px; color: #9ca3af;">KONEKSI PING</div>
+                <div id="delta-ping" style="font-weight: bold; color: #38bdf8;">0 ms</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accounts & Shekles List -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+            <span>Accounts & Shekles List</span>
+            <span id="account-count" style="color: #38bdf8;">0/1 Online</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; background: #111217; padding: 8px 10px; border-radius: 6px; font-size: 12px; align-items: center;">
+            <div>
+                <span id="acc-status-dot" style="color: #ef4444; margin-right: 4px;">●</span>
+                <span id="acc-name">Offline</span>
+            </div>
+            <div id="acc-shekles" style="font-weight: bold; color: #fbbf24;">0</div>
         </div>
     </div>
 </div>
@@ -90,67 +152,78 @@
     const API_KEY = "$2a$10$ERw5fC9bbSp9uFZOfMSSBe/JMRlA6u0xMsbEaI3qmBmP3noMd8LkW";
     const URL = `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`;
 
-    function updateDashboardUI(record) {
-        // Cek status Online/Offline berdasarkan waktu update terakhir (< 10 detik)
+    function updateUI(record) {
         const currentTime = Math.floor(Date.now() / 1000);
         const lastHeartbeat = record.lastHeartbeat ? Math.floor(record.lastHeartbeat / 1000) : record.timestamp;
         const isOnline = (currentTime - lastHeartbeat) < 10;
 
+        // Status badge
         const statusBadge = document.getElementById("status-badge");
         statusBadge.innerText = isOnline ? "Online" : "Offline";
         statusBadge.className = isOnline ? "status-online" : "status-offline";
 
-        // Update teks informasi player & metrics
-        document.getElementById("player-name").innerText = record.player || "Player Aktif";
-        document.getElementById("player-shekles").innerText = record.shekles ? record.shekles.toLocaleString() : "0";
-        document.getElementById("fps-val").innerText = (record.metrics && record.metrics.fps) ? record.metrics.fps + " FPS" : "0 FPS";
-        document.getElementById("ping-val").innerText = (record.metrics && record.metrics.ping) ? record.metrics.ping + " ms" : "0 ms";
+        // Delta badge & metrics
+        const deltaBadge = document.getElementById("delta-badge");
+        deltaBadge.innerText = isOnline ? "Online" : "Offline";
+        deltaBadge.className = isOnline ? "status-online" : "status-offline";
+        deltaBadge.style.background = isOnline ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)";
 
-        // Update daftar inventory secara dinamis
+        const fps = (record.metrics && record.metrics.fps) ? record.metrics.fps + " FPS" : "0 FPS";
+        const ping = (record.metrics && record.metrics.ping) ? record.metrics.ping + " ms" : "0 ms";
+
+        document.getElementById("fps-val").innerText = fps;
+        document.getElementById("ping-val").innerText = ping;
+        document.getElementById("delta-fps").innerText = fps;
+        document.getElementById("delta-ping").innerText = ping;
+
+        // Player & Accounts
+        const playerName = record.player || "Offline";
+        document.getElementById("player-status-text").innerText = playerName;
+        document.getElementById("acc-name").innerText = playerName;
+        document.getElementById("acc-shekles").innerText = record.shekles ? record.shekles.toLocaleString() : "0";
+        document.getElementById("account-count").innerText = isOnline ? "1/1 Online" : "0/1 Online";
+        
+        const dot = document.getElementById("acc-status-dot");
+        dot.style.color = isOnline ? "#22c55e" : "#ef4444";
+
+        // Inventory list
         const inventoryContainer = document.getElementById("inventory-list");
         if (record.items) {
             inventoryContainer.innerHTML = "";
-            let totalTypesCount = 0;
-
-            for (let [itemName, itemData] of Object.entries(record.items)) {
-                totalTypesCount++;
-                let itemCard = document.createElement("div");
-                itemCard.className = "item-card";
-                itemCard.innerHTML = `
-                    <span>${itemName}</span>
-                    <span style="color: #4ade80; font-weight: bold;">x${itemData.count.toLocaleString()}</span>
-                `;
-                inventoryContainer.appendChild(itemCard);
+            let countTypes = 0;
+            for (let [name, data] of Object.entries(record.items)) {
+                countTypes++;
+                let row = document.createElement("div");
+                row.className = "item-row";
+                row.innerHTML = `<span>${name}</span> <span style="color: #22c55e; font-weight: bold;">x${data.count.toLocaleString()}</span>`;
+                inventoryContainer.appendChild(row);
             }
-            document.getElementById("total-types").innerText = `${totalTypesCount} Jenis Item`;
+            document.getElementById("total-types").innerText = `${countTypes} Jenis Item`;
         }
     }
 
-    async function fetchInventoryData() {
+    async function fetchData() {
         try {
-            let response = await fetch(URL, {
-                headers: { "X-Master-Key": API_KEY }
-            });
-            
-            if (!response.ok) throw new Error("Gagal mengambil data dari server");
-            
-            let data = await response.json();
-            if (data && data.record) {
-                updateDashboardUI(data.record);
-            }
-        } catch (error) {
-            console.error("Koneksi error:", error);
-            document.getElementById("status-badge").innerText = "Offline (Gagal Terhubung)";
+            let res = await fetch(URL, { headers: { "X-Master-Key": API_KEY } });
+            if (!res.ok) throw new Error();
+            let json = await res.json();
+            if (json && json.record) updateUI(json.record);
+        } catch (e) {
+            document.getElementById("status-badge").innerText = "Offline";
             document.getElementById("status-badge").className = "status-offline";
         }
     }
 
-    // Panggil pertama kali saat halaman dibuka
-    fetchInventoryData();
+    function addTarget() {
+        let val = document.getElementById("target-input").value;
+        if(val) alert("Target ditambahkan: " + val);
+    }
 
-    // Pasang setInterval agar halaman web otomatis merefresh data setiap 2 detik
-    setInterval(fetchInventoryData, 2000);
+    fetchData();
+    setInterval(fetchData, 2000);
 </script>
 
+</body>
+</html>
 </body>
 </html>
