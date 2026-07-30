@@ -1,3 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Control Center - Dashboard Sederhana</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0f121e;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #161b2e;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        h2 {
+            color: #4ade80;
+        }
+        .card {
+            background-color: #1f293d;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            background-color: #0f121e;
+            color: white;
+            border: 1px solid #374151;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🌱 Grow A Garden 2 - Web Control Center</h2>
+        
+        <div class="card">
+            <h3>Pilih Akun yang Dipantau</h3>
+            <select id="accountSelect">
+                <option value="">-- Memuat Akun --</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <h3>Informasi Akun</h3>
+            <p><strong>Shekles:</strong> <span id="sheklesDisplay">0</span></p>
+        </div>
+
+        <div class="card">
+            <h3>Barang Terkumpul (Inventory)</h3>
+            <div id="inventoryList">
+                <p style="color: #9ca3af;">Belum ada item yang termuat...</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         const BIN_ID = "6a6b4a70f5f4af5e29d5a623";
         const API_KEY = "$2a$10$SQCp/OkqnUEfVA1EYKrwuRqgrZIXz07G1tdoF2aUqj.a9134zV8K.";
@@ -14,7 +80,7 @@
                 let selectElement = document.getElementById("accountSelect");
                 let currentSelected = selectElement.value;
                 
-                // Perbarui daftar dropdown secara otomatis dari Cloud
+                // Isi ulang dropdown secara dinamis
                 selectElement.innerHTML = '<option value="">-- Pilih Akun --</option>';
                 for (let accName in accounts) {
                     let opt = document.createElement("option");
@@ -58,7 +124,9 @@
         setInterval(fetchData, 5000);
         document.getElementById("accountSelect").addEventListener("change", fetchData);
         
-        // Panggil saat pertama kali load
+        // Panggil pertama kali
         fetchData();
     </script>
-    
+
+</body>
+</html>
