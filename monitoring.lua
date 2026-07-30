@@ -7,7 +7,6 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
-local Workspace = game:GetService("Workspace")
 local AccountKey = LocalPlayer.Name 
 
 local httpRequest = (syn and syn.request) or (fluxus and fluxus.request) or request or http_request
@@ -95,12 +94,9 @@ ToggleBtn.Text = "Status: AKTIF (ON)"
 ToggleBtn.Parent = MainFrame
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
 
--- Tombol Aksi GUI
-CloseBtn.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
-
 -- === FUNGSI SINKRONISASI CLOUD DENGAN SCANNER MENYELURUH ===
+local isSyncActive = true
+
 local function updateCloud(removeAccount)
     task.spawn(function()
         pcall(function()
@@ -157,5 +153,45 @@ local function updateCloud(removeAccount)
     end)
 end
 
--- Jalankan sinkronisasi awal
+-- === INTERAKSI TOMBOL GUI (FIX TOMBOL BERFUNGSI) ===
+
+-- Tombol Close (Menutup GUI dan menghapus data sesi dari Cloud)
+CloseBtn.MouseButton1Click:Connect(function()
+    updateCloud(true) -- Hapus akun dari cloud saat ditutup
+    ScreenGui:Destroy()
+end)
+
+-- Tombol Minimize (Mengecilkan/Membesarkan Tampilan Panel)
+local isMinimized = false
+MinBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    if isMinimized then
+        MainFrame.Size = UDim2.new(0, 220, 0, 35)
+        StatusLabel.Visible = false
+        ToggleBtn.Visible = false
+        MinBtn.Text = "+"
+    else
+        MainFrame.Size = UDim2.new(0, 220, 0, 140)
+        StatusLabel.Visible = true
+        ToggleBtn.Visible = true
+        MinBtn.Text = "-"
+    end
+end)
+
+-- Tombol Toggle Status (ON / OFF Sinkronisasi)
+ToggleBtn.MouseButton1Click:Connect(function()
+    isSyncActive = not isSyncActive
+    if isSyncActive then
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(34, 197, 94) -- Hijau
+        ToggleBtn.Text = "Status: AKTIF (ON)"
+        StatusLabel.Text = "Status: Terhubung"
+        updateCloud(false)
+    else
+        ToggleBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68) -- Merah
+        ToggleBtn.Text = "Status: MATI (OFF)"
+        StatusLabel.Text = "Status: Dijeda"
+    end
+end)
+
+-- Jalankan sinkronisasi awal saat script pertama kali dimuat
 updateCloud(false)
