@@ -45,6 +45,14 @@
         .account-name { font-weight: bold; color: #e2e8f0; }
         .shekles-val { color: #facc15; font-weight: bold; text-align: right; }
         .package-col { font-family: monospace; color: #38bdf8; font-size: 10px; }
+        
+        /* Styling Tombol Mulai/Stop pada Tabel */
+        .action-btn { padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; border: none; }
+        .btn-start { background: #22c55e; color: #0f121e; }
+        .btn-start:hover { background: #16a34a; }
+        .btn-stop { background: #ef4444; color: #fff; }
+        .btn-stop:hover { background: #dc2626; }
+
         .search-input { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
         .account-select, .search-input { background: #0f121e; border: 1px solid #2d3748; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 11px; outline: none; }
         .account-select { width: 100%; margin-bottom: 10px; cursor: pointer; }
@@ -130,6 +138,7 @@
                                         <th>Kemasan / Paket</th>
                                         <th>Akun</th>
                                         <th style="text-align: right;">Shekles</th>
+                                        <th style="text-align: center;">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="device-table-body">
@@ -137,6 +146,7 @@
                                         <td><span class="package-col">com.roblox.client</span></td>
                                         <td><span class="account-name">🔴 Offline</span></td>
                                         <td class="shekles-val">0</td>
+                                        <td style="text-align: center;"><button class="action-btn btn-start" onclick="toggleCloudPhone('default', 'start')">▶ Mulai</button></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -243,12 +253,18 @@
             }
             
             const packageName = accData.package || "com.roblox.client";
+            const isOnline = accData.status !== "offline"; // Asumsi status berdasarkan data akun
             
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td><span class="package-col">${packageName}</span></td>
                 <td><span class="account-name">🟢 ${accName}</span></td>
                 <td class="shekles-val">${(accData.shekles || 0).toLocaleString()}</td>
+                <td style="text-align: center;">
+                    <button class="action-btn ${isOnline ? 'btn-stop' : 'btn-start'}" onclick="toggleCloudPhone('${accName}', '${isOnline ? 'stop' : 'start'}')">
+                        ${isOnline ? '⏹ Stop' : '▶ Mulai'}
+                    </button>
+                </td>
             `;
             tableBody.appendChild(tr);
         }
@@ -270,7 +286,7 @@
             document.getElementById("total-types").innerText = "0 Jenis Item";
             document.getElementById("item-grid").innerHTML = "";
             if (onlineCount === 0) {
-                tableBody.innerHTML = `<tr><td><span class="package-col">com.roblox.client</span></td><td><span class="account-name">🔴 Offline</span></td><td class="shekles-val">0</td></tr>`;
+                tableBody.innerHTML = `<tr><td><span class="package-col">com.roblox.client</span></td><td><span class="account-name">🔴 Offline</span></td><td class="shekles-val">0</td><td style="text-align: center;"><button class="action-btn btn-start" onclick="toggleCloudPhone('default', 'start')">▶ Mulai</button></td></tr>`;
             }
             return;
         }
@@ -315,8 +331,6 @@
         document.getElementById("execution-log").innerText = "Status: Script dikirim ke antrian cloud commands.";
     }
 
-    setInterval(fetchData, 4000);
-    fetchData();
-</script>
-</body>
-</html>
+    // Fungsi trigger untuk tombol Mulai / Stop Cloudphone
+    function toggleCloudPhone(accountName, action) {
+        alert(`Perintah "${action.toUpperCase()}" dikirim untuk akun: ${account
