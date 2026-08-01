@@ -3,180 +3,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Account Cloud Dashboard</title>
+    <title>Grow A Garden 2 - Web Control Center</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f121e;
-            color: #f8fafc;
-            margin: 0;
-            padding: 20px;
-        }
-        h2 {
-            color: #4ade80;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        .card {
-            background-color: #161b2e;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            border-left: 5px solid #38bdf8;
-        }
-        .card h3 {
-            margin-top: 0;
-            color: #38bdf8;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .info-item {
-            background: #1e253c;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        .btn-stop {
-            background-color: #ef4444;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        .btn-stop:hover {
-            background-color: #dc2626;
-        }
-        .item-list {
-            font-size: 13px;
-            color: #94a3b8;
-            background: #111526;
-            padding: 10px;
-            border-radius: 6px;
-        }
-        .no-data {
-            text-align: center;
-            color: #64748b;
-            margin-top: 40px;
-            font-style: italic;
-        }
+        body { background-color: #0b0e17; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar Styling ala Pterodactyl */
+        .sidebar { width: 70px; background: #121726; border-right: 1px solid #2d3748; display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 15px; flex-shrink: 0; z-index: 10; }
+        .sidebar-icon { width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #94a3b8; font-size: 18px; transition: all 0.2s; border: 1px solid transparent; }
+        .sidebar-icon:hover { background: #1e2640; color: #fff; }
+        .sidebar-icon.active { background: #1e2640; color: #6366f1; border-color: #3b82f6; }
+        .sidebar-profile { width: 38px; height: 38px; border-radius: 50%; background: #2d3748; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden; border: 2px solid #6366f1; }
+        
+        /* Main Wrapper */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 15px; }
+        .container { max-width: 1000px; margin: 0 auto; background: #161b2e; padding: 15px; border-radius: 12px; border: 1px solid #2d3748; width: 100%; box-sizing: border-box; }
+        
+        /* Nav Tabs & Content */
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #2d3748; padding-bottom: 10px; }
+        .tab-btn { background: #1e2640; color: #94a3b8; border: 1px solid #2d3748; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
+        .tab-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        h2 { color: #4ade80; margin-top: 0; font-size: 17px; }
+        .stats { background: #1e2640; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2d3748; }
+        .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 15px; }
+        @media(max-width: 850px) { .main-layout { grid-template-columns: 1fr; } body { flex-direction: column; overflow: auto; height: auto; } .sidebar { width: 100%; height: 60px; flex-direction: row; justify-content: center; padding: 0; } }
+        
+        .device-section, .target-section, .shekles-section { background: #1e2640; border: 1px solid #2d3748; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+        .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #2d3748; padding-bottom: 8px; }
+        .online-badge { background: #143324; color: #4ade80; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #1e5638; }
+        .offline-badge { background: #331414; color: #f87171; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #561e1e; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+        .metric-card { background: #161b2e; border: 1px solid #2d3748; padding: 8px; border-radius: 6px; text-align: center; }
+        .metric-label { font-size: 9px; color: #94a3b8; margin-bottom: 2px; text-transform: uppercase; }
+        .metric-value { font-size: 14px; font-weight: bold; color: #4ade80; }
+        .table-container { max-height: 380px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
+        th, td { padding: 6px 8px; border-bottom: 1px solid #2d3748; }
+        th { color: #94a3b8; font-weight: 600; background: #161b2e; position: sticky; top: 0; }
+        .account-name { font-weight: bold; color: #e2e8f0; }
+        .shekles-val { color: #facc15; font-weight: bold; text-align: right; }
+        .package-col { font-family: monospace; color: #38bdf8; font-size: 10px; }
+        .search-input { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        .account-select, .search-input { background: #0f121e; border: 1px solid #2d3748; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 11px; outline: none; }
+        .account-select { width: 100%; margin-bottom: 10px; cursor: pointer; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+        .card { background: #1e2640; border: 1px solid #2d3748; padding: 8px 10px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .item-icon-box { width: 32px; height: 32px; background: #161b2e; border: 1px solid #2d3748; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+        .item-info { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden; }
+        .item-name { font-weight: bold; font-size: 11px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-sub { font-size: 9px; color: #94a3b8; }
+        .item-count { background: #143324; color: #4ade80; padding: 3px 6px; border-radius: 6px; font-weight: bold; font-size: 11px; border: 1px solid #1e5638; flex-shrink: 0; }
+        .script-box { background: #1e2640; border: 1px solid #2d3748; border-radius: 8px; padding: 15px; }
+        .script-textarea { width: 100%; height: 180px; background: #0f121e; border: 1px solid #2d3748; color: #4ade80; font-family: monospace; padding: 10px; border-radius: 6px; font-size: 12px; outline: none; box-sizing: border-box; }
+        .execute-btn { background: #22c55e; color: #0f121e; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: 10px; }
+        .execution-log { margin-top: 10px; background: #0f121e; border: 1px solid #2d3748; padding: 8px; border-radius: 6px; font-family: monospace; font-size: 10px; color: #38bdf8; }
     </style>
 </head>
 <body>
 
+<!-- Sidebar Samping Kiri ala Pterodactyl -->
+<div class="sidebar">
+    <div class="sidebar-profile">👤</div>
+    <div class="sidebar-icon active" title="Dashboard" onclick="switchTab('dashboard')">🏠</div>
+    <div class="sidebar-icon" title="Scripts Hub" onclick="switchTab('scripts')">⚡</div>
+    <div class="sidebar-icon" title="Server Console">🖥️</div>
+    <div class="sidebar-icon" title="Files">📁</div>
+    <div class="sidebar-icon" title="Settings">⚙️</div>
+</div>
+
+<div class="main-wrapper">
     <div class="container">
-        <h2>🌱 Multi-Account Live Dashboard</h2>
-        <div id="accounts-container">
-            <div class="no-data">Memuat data dari cloud...</div>
+        <h2>🌱 Grow A Garden 2 - Web Control Center</h2>
+        
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('scripts')">Scripts Hub</button>
         </div>
-    </div>
 
-    <script>
-        const BIN_ID = "6a6b4a70f5f4af5e29d5a623";
-        const API_KEY = "$2a$10$SQCp/OkqnUEFvNA1EYKrwuRqqrZIxzO7G1tJuDos7XgY1l1cySG4y";
-        const URL = `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`;
-
-        async function fetchDashboardData() {
-            try {
-                let response = await fetch(URL, {
-                    headers: { "X-Master-Key": API_KEY }
-                });
-                let result = await response.json();
-                let accounts = result.record.accounts || {};
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="stats">
+                <div>
+                    <span id="player-name" style="font-weight: bold; color: #60a5fa; font-size: 12px;">Memuat Player...</span><br>
+                    <small style="color: #94a3b8; font-size: 10px;" id="last-update">Status: Menghubungkan...</small>
+                </div>
+                <div style="color: #4ade80; font-weight: bold; font-size: 12px;" id="total-types">0 Jenis Item</div>
+            </div>
+            
+            <div class="main-layout">
+                <div>
+                    <div class="target-section">
+                        <div style="font-size: 11px; font-weight: bold; color: #94a3b8; margin-bottom: 6px;">Pilih Akun yang Dipantau</div>
+                        <select id="account-selector" class="account-select" onchange="changeSelectedAccount()">
+                            <option value="">-- Semua Akun Terdeteksi --</option>
+                        </select>
+                    </div>
+                    <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Barang Terkumpul (Inventory)</div>
+                    <input type="text" id="item-search-input" class="search-input" placeholder="Cari nama item di backpack..." oninput="renderInventoryGrid()">
+                    <div class="grid" id="item-grid"></div>
+                </div>
                 
-                let container = document.getElementById("accounts-container");
-                let html = "";
-
-                if (Object.keys(accounts).length === 0) {
-                    container.innerHTML = `<div class="no-data">Tidak ada akun Roblox yang terhubung saat ini.</div>`;
-                    return;
-                }
-
-                for (let [accountName, data] of Object.entries(accounts)) {
-                    let lastUpdate = new Date(data.LastUpdate * 1000).toLocaleTimeString();
-                    
-                    // Format daftar item inventory
-                    let itemsHtml = "";
-                    if (data.items && Object.keys(data.items).length > 0) {
-                        for (let [itemName, itemDetails] of Object.entries(data.items)) {
-                            itemsHtml += `${itemName} (${itemDetails.count}), `;
-                        }
-                        itemsHtml = itemsHtml.slice(0, -2); // Hapus koma terakhir
-                    } else {
-                        itemsHtml = "Inventory Kosong";
-                    }
-
-                    html += `
-                        <div class="card">
-                            <h3>
-                                <span>👤 ${accountName}</span>
-                                <button class="btn-stop" onclick="sendCommand('${accountName}', 'stop')">Matikan Akun</button>
-                            </h3>
-                            <div class="info-grid">
-                                <div class="info-item">💰 <b>Shekles:</b> ${data.shekles || 0}</div>
-                                <div class="info-item">📱 <b>Device/Pkg:</b> ${data.package || '-'}</div>
-                                <div class="info-item">⚡ <b>FPS / Ping:</b> ${data.metrics?.fps || 60} / ${data.metrics?.ping || 0}ms</div>
-                                <div class="info-item">🕒 <b>Update:</b> ${lastUpdate}</div>
-                            </div>
-                            <div class="item-list">
-                                <b>🎒 Inventory:</b> ${itemsHtml}
+                <div>
+                    <div class="device-section">
+                        <div class="device-header">
+                            <div style="font-weight: bold; font-size: 13px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                                <span>Sesi Delta</span>
+                                <span id="session-badge" class="offline-badge">○ Offline</span>
                             </div>
                         </div>
-                    `;
+                        <div class="metrics-grid">
+                            <div class="metric-card"><div class="metric-label">Performa FPS</div><div class="metric-value" id="metric-fps" style="color: #38bdf8;">0 FPS</div></div>
+                            <div class="metric-card"><div class="metric-label">Koneksi Ping</div><div class="metric-value" id="metric-ping" style="color: #facc15;">0 ms</div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="shekles-section">
+                        <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; display: flex; justify-content: space-between;">
+                            <span>Accounts & Package List</span>
+                            <span style="color: #4ade80;" id="online-count">0 Online</span>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Kemasan / Paket</th>
+                                        <th>Akun</th>
+                                        <th style="text-align: right;">Shekles</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="device-table-body">
+                                    <tr>
+                                        <td><span class="package-col">com.roblox.client</span></td>
+                                        <td><span class="account-name">🔴 Offline</span></td>
+                                        <td class="shekles-val">0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-scripts" class="tab-content">
+            <div class="script-box">
+                <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Remote Execute Script ke Delta (In-Game)</div>
+                <textarea id="script-input" class="script-textarea" placeholder="Tulis script Luau di sini..."></textarea>
+                <button class="execute-btn" onclick="sendScriptToGame()">🚀 Execute ke Delta</button>
+                <div class="execution-log" id="execution-log">Status: Menunggu perintah script dikirim...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const BIN_ID = "6a6b4a70f5f4af5e29d5a623";
+    const API_KEY = "$2a$10$SQCp/OkqnUEFvNA1EYKrwuRqqrZIxzO7G1tJuDos7XgY1l1cySG4y";
+    const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+    let globalData = { accounts: {} };
+    let selectedAccount = "";
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.sidebar-icon').forEach(i => i.classList.remove('active'));
+
+        if(tabName === 'dashboard') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('tab-dashboard').classList.add('active');
+            document.querySelectorAll('.sidebar-icon')[1].classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('tab-scripts').classList.add('active');
+            document.querySelectorAll('.sidebar-icon')[2].classList.add('active');
+        }
+    }
+
+    async function fetchData() {
+        try {
+            const response = await fetch(API_URL + "/latest", {
+                method: "GET",
+                headers: { "X-Master-Key": API_KEY, "Cache-Control": "no-cache" }
+            });
+            if (!response.ok) return;
+            
+            const jsonRes = await response.json();
+            globalData = jsonRes.record || jsonRes || {};
+
+            updateAccountSelector();
+            renderDashboard();
+        } catch (e) {
+            console.error("Fetch Error:", e);
+        }
+    }
+
+    function updateAccountSelector() {
+        const selector = document.getElementById("account-selector");
+        const accounts = globalData.accounts || {};
+        const currentVal = selector.value;
+        
+        selector.innerHTML = '<option value="">-- Pilih Akun --</option>';
+        let found = false;
+
+        for (const accName in accounts) {
+            const opt = document.createElement("option");
+            opt.value = accName;
+            opt.innerText = accName;
+            if (accName === currentVal) opt.selected = true;
+            selector.appendChild(opt);
+            found = true;
+        }
+
+        if (!selectedAccount && found) {
+            selectedAccount = Object.keys(accounts)[0];
+            selector.value = selectedAccount;
+        }
+    }
+
+    function changeSelectedAccount() {
+        selectedAccount = document.getElementById("account-selector").value;
+        renderDashboard();
+    }
+
+    function renderDashboard() {
+        const accounts = globalData.accounts || {};
+        const badge = document.getElementById("session-badge");
+        const tableBody = document.getElementById("device-table-body");
+        
+        tableBody.innerHTML = "";
+        let onlineCount = 0;
+        let activeData = null;
+
+        for (const [accName, accData] of Object.entries(accounts)) {
+            onlineCount++;
+            if (accName === selectedAccount) {
+                activeData = accData;
+            }
+            
+            const packageName = accData.package || "com.roblox.client";
+            
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><span class="package-col">${packageName}</span></td>
+                <td><span class="account-name">🟢 ${accName}</span></td>
+                <td class="shekles-val">${(accData.shekles || 0).toLocaleString()}</td>
+            `;
+            tableBody.appendChild(tr);
+        }
+
+        document.getElementById("online-count").innerText = onlineCount + " Online";
+
+        if (!activeData && onlineCount > 0) {
+            selectedAccount = Object.keys(accounts)[0];
+            activeData = accounts[selectedAccount];
+            document.getElementById("account-selector").value = selectedAccount;
+        }
+
+        if (!activeData) {
+            badge.className = "offline-badge"; badge.innerText = "○ Offline";
+            document.getElementById("player-name").innerText = "Player Utama: Menunggu Sesi Delta...";
+            document.getElementById("last-update").innerText = "Status: Belum Terdeteksi Aktif";
+            document.getElementById("metric-fps").innerText = "0 FPS";
+            document.getElementById("metric-ping").innerText = "0 ms";
+            document.getElementById("total-types").innerText = "0 Jenis Item";
+            document.getElementById("item-grid").innerHTML = "";
+            if (onlineCount === 0) {
+                tableBody.innerHTML = `<tr><td><span class="package-col">com.roblox.client</span></td><td><span class="account-name">🔴 Offline</span></td><td class="shekles-val">0</td></tr>`;
+            }
+            return;
+        }
+
+        badge.className = "online-badge"; badge.innerText = "● Online";
+        document.getElementById("player-name").innerText = "Player Dipantau: " + selectedAccount;
+        document.getElementById("last-update").innerText = "Update: " + new Date().toLocaleTimeString();
+        if (activeData.metrics) {
+            document.getElementById("metric-fps").innerText = (activeData.metrics.fps || 60) + " FPS";
+            document.getElementById("metric-ping").innerText = (activeData.metrics.ping || 50) + " ms";
+        }
+        renderInventoryGrid(activeData.items);
+    }
+
+    function renderInventoryGrid(itemsObj) {
+        const grid = document.getElementById("item-grid");
+        grid.innerHTML = "";
+        if (!itemsObj) {
+            document.getElementById("total-types").innerText = "0 Jenis Item";
+            return;
+        }
+
+        const searchQuery = (document.getElementById("item-search-input").value || "").toLowerCase();
+        let count = 0, visibleCount = 0;
+        
+        for (const [itemName, itemData] of Object.entries(itemsObj)) {
+            count++;
+            if (searchQuery && !itemName.toLowerCase().includes(searchQuery)) continue;
+            visibleCount++;
+            let qty = (typeof itemData === 'object' && itemData !== null) ? (itemData.count || 1) : itemData;
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `<div class="item-icon-box"><span style="font-size: 14px;">🌱</span></div><div class="item-info"><span class="item-name">${itemName}</span><span class="item-sub">Inventory</span></div><span class="item-count">x${qty}</span>`;
+            grid.appendChild(card);
+        }
+        document.getElementById("total-types").innerText = visibleCount + " / " + count + " Jenis Item";
+    }
+
+    async function sendScriptToGame() {
+        const scriptText = document.getElementById("script-input").value.trim();
+        if (!scriptText) return;
+        
+        try {
+            let response = await fetch(API_URL, {
+                headers: { "X-Master-Key": API_KEY }
+            });
+            let result = await response.json();
+            let currentAccounts = result.record.accounts || {};
+            let currentCommands = result.record.commands || {};
+
+            if (selectedAccount) {
+                currentCommands[selectedAccount] = scriptText;
+            } else {
+                for (let acc in currentAccounts) {
+                    currentCommands[acc] = scriptText;
                 }
-                container.innerHTML = html;
-            } catch (error) {
-                console.error("Gagal mengambil data:", error);
             }
+
+            await fetch(API_URL, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Master-Key": API_KEY
+                },
+                body: JSON.stringify({
+                    accounts: currentAccounts,
+                    commands: currentCommands
+                })
+            });
+
+            document.getElementById("execution-log").innerText = "Status: Script berhasil dikirim ke antrian cloud!";
+        } catch (err) {
+            document.getElementById("execution-log").innerText = "Status: Gagal mengirim script!";
         }
+    }
 
-        async function sendCommand(accountKey, command) {
-            try {
-                let getResp = await fetch(URL, {
-                    headers: { "X-Master-Key": API_KEY }
-                });
-                let getResult = await getResp.json();
-                let currentAccounts = getResult.record.accounts || {};
-                let currentCommands = getResult.record.commands || {};
-
-                currentCommands[accountKey] = command;
-
-                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-Master-Key": API_KEY
-                    },
-                    body: JSON.stringify({
-                        accounts: currentAccounts,
-                        commands: currentCommands
-                    })
-                });
-                
-                alert(`Perintah '${command}' dikirim ke ${accountKey}`);
-                fetchDashboardData();
-            } catch (err) {
-                alert("Gagal mengirim perintah!");
-            }
-        }
-
-        // Refresh data otomatis setiap 4 detik
-        setInterval(fetchDashboardData, 4000);
-        fetchDashboardData();
-    </script>
+    setInterval(fetchData, 4000);
+    fetchData();
+</script>
 </body>
 </html>
