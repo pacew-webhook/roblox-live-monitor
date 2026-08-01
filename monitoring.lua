@@ -10,7 +10,12 @@ local CoreGui = game:GetService("CoreGui")
 local AccountKey = LocalPlayer.Name 
 
 local httpRequest = (syn and syn.request) or (fluxus and fluxus.request) or request or http_request
-if not httpRequest then return end
+if not httpRequest then 
+    print("[CloudSync Error]: HTTP Request tidak didukung oleh executor ini!")
+    return 
+end
+
+print("[CloudSync]: Script berhasil diinisialisasi untuk akun: " .. AccountKey)
 
 local function getAutomaticPackageName()
     local detectedPackage = "com.roblox.client"
@@ -119,90 +124,107 @@ end
 
 local function sendDataToCloud()
     task.spawn(function()
+        print("[CloudSync]: Mencoba menghubungi server JSONBin...")
+        local successGet, response = pcall(function()
+            return httpRequest({ Url = URL, Method = "GET", Headers = { ["X-Master-Key"] = API_KEY } })
+        end)
+        
+        if not successGet then
+            print("[CloudSync Error]: Gagal melakukan HTTP GET ke server. Cek koneksi atau URL.")
+            StatusLabel.Text = "Status: Gagal Koneksi GET"
+            return
+        end
+        
+        local currentAccounts = {}
+        local currentCommands = {}
+        
+        if response and response.Body then
+            local successDecode, decoded = pcall(function() return HttpService:JSONDecode(response.Body) end)
+            if successDecode and decoded and decoded.record then
+                currentAccounts = decoded.record.accounts or {}
+                currentCommands = decoded.record.commands or {}
+                print("[CloudSync]: Data server berhasil dibaca.")
+                
+                -- CEK COMMAND DARI WEB
+                if currentCommands[AccountKey] then
+                    local cmd = currentCommands[AccountKey]
+                    print("[CloudSync]: Perintah diterima dari web -> " .. tostring(cmd))
+                    if cmd == "stop" then
+                        StatusLabel.Text = "Status: Dimatikan dari Web"
+                        isSyncActive = false
+                        ToggleBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
+                        ToggleBtn.Text = "Status: MATI (OFF)"
+                        
+                        currentAccounts[AccountKey] = nil
+                        currentCommands[AccountKey] = nil
+                        
+                        httpRequest({
+                            Url = URL,
+                            Method = "PUT",
+                            Headers = { ["Content-Type"] = "application/json", ["X-Master-Key"] = API_KEY },
+                            Body = HttpService:JSONEncode({ accounts = currentAccounts, commands = currentCommands })
+                        })
+                        
+                        task.wait(1)
+                        ScreenGui:Destroy()
+                        return
+                    end
+                end
+            else
+                print("[CloudSync Warning]: Format JSON response tidak valid.")
+            end
+        end
+        
+        local sheklesValue = 0
         pcall(function()
-            local successGet, response = pcall(function()
-                return httpRequest({ Url = URL, Method = "GET", Headers = { ["X-Master-Key"] = API_KEY } })
-            end)
-            
-            local currentAccounts = {}
-            local currentCommands = {}
-            
-            if successGet and response and response.Body then
-                local successDecode, decoded = pcall(function() return HttpService:JSONDecode(response.Body) end)
-                if successDecode and decoded and decoded.record then
-                    currentAccounts = decoded.record.accounts or {}
-                    currentCommands = decoded.record.commands or {}
-                    
-                    -- CEK APAKAH ADA PERINTAH KHUSUS UNTUK AKUN INI
-                    if currentCommands[AccountKey] then
-                        local cmd = currentCommands[AccountKey]
-                        if cmd == "stop" then
-                            StatusLabel.Text = "Status: Dimatikan dari Web"
-                            isSyncActive = false
-                            ToggleBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
-                            ToggleBtn.Text = "Status: MATI (OFF)"
-                            
-                            -- Hapus akun dari list cloud saat di-stop
-                            currentAccounts[AccountKey] = nil
-                            currentCommands[AccountKey] = nil -- Bersihkan command
-                            
-                            httpRequest({
-                                Url = URL,
-                                Method = "PUT",
-                                Headers = { ["Content-Type"] = "application/json", ["X-Master-Key"] = API_KEY },
-                                Body = HttpService:JSONEncode({ accounts = currentAccounts, commands = currentCommands })
-                            })
-                            
-                            task.wait(1)
-                            ScreenGui:Destroy()
-                            return
-                        end
+            local ls = LocalPlayer:FindFirstChild("leaderstats")
+            if ls then
+                for _, s in ipairs(ls:GetChildren()) do
+                    local sName = s.Name:lower()
+                    if sName:find("shekle") or sName:find("money") or sName:find("cash") or sName:find("coin") then
+                        sheklesValue = s.Value
+                        break
                     end
                 end
             end
-            
-            local sheklesValue = 0
-            pcall(function()
-                local ls = LocalPlayer:FindFirstChild("leaderstats")
-                if ls then
-                    for _, s in ipairs(ls:GetChildren()) do
-                        local sName = s.Name:lower()
-                        if sName:find("shekle") or sName:find("money") or sName:find("cash") or sName:find("coin") then
-                            sheklesValue = s.Value
-                            break
-                        end
-                    end
-                end
-            end)
+        end)
 
-            local inventoryData = {}
-            pcall(function()
-                local backpack = LocalPlayer:FindFirstChild("Backpack")
-                if backpack then
-                    for _, item in ipairs(backpack:GetChildren()) do
-                        local name = item.Name
-                        inventoryData[name] = { count = getItemCount(item) }
-                    end
+        local inventoryData = {}
+        pcall(function()
+            local backpack = LocalPlayer:FindFirstChild("Backpack")
+            if backpack then
+                for _, item in ipairs(backpack:GetChildren()) do
+                    local name = item.Name
+                    inventoryData[name] = { count = getItemCount(item) }
                 end
-            end)
-            
-            currentAccounts[AccountKey] = {
-                LastUpdate = os.time(),
-                package = getAutomaticPackageName(),
-                shekles = sheklesValue,
-                items = inventoryData,
-                metrics = { fps = 60, ping = 45 }
-            }
-            
-            httpRequest({
+            end
+        end)
+        
+        currentAccounts[AccountKey] = {
+            LastUpdate = os.time(),
+            package = getAutomaticPackageName(),
+            shekles = sheklesValue,
+            items = inventoryData,
+            metrics = { fps = 60, ping = 45 }
+        }
+        
+        print("[CloudSync]: Mengirim update data akun ke cloud...")
+        local successPut, putResp = pcall(function()
+            return httpRequest({
                 Url = URL,
                 Method = "PUT",
                 Headers = { ["Content-Type"] = "application/json", ["X-Master-Key"] = API_KEY },
                 Body = HttpService:JSONEncode({ accounts = currentAccounts, commands = currentCommands })
             })
-            
-            StatusLabel.Text = "Terupdate: " + os.date("%H:%M:%S")
         end)
+        
+        if successPut and putResp then
+            print("[CloudSync]: Data berhasil disinkronkan!")
+            StatusLabel.Text = "Terupdate: " .. os.date("%H:%M:%S")
+        else
+            print("[CloudSync Error]: Gagal mengirim data (PUT Request gagal).")
+            StatusLabel.Text = "Status: Gagal Kirim PUT"
+        end
     end)
 end
 
@@ -224,6 +246,7 @@ local function removeDataFromCloud()
                         Headers = { ["Content-Type"] = "application/json", ["X-Master-Key"] = API_KEY },
                         Body = HttpService:JSONEncode({ accounts = currentAccounts, commands = currentCommands })
                     })
+                    print("[CloudSync]: Data akun dihapus dari cloud.")
                 end
             end
         end)
@@ -271,6 +294,6 @@ task.spawn(function()
         if isSyncActive then
             sendDataToCloud()
         end
-        task.wait(2)
+        task.wait(4)
     end
 end)
