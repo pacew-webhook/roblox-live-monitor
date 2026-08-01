@@ -147,8 +147,12 @@ local function updateCloud(removeAccount)
                 -- Cek Backpack
                 local backpack = LocalPlayer:FindFirstChild("Backpack")
                 if backpack then
+                    local counts = {}
                     for _, item in ipairs(backpack:GetChildren()) do
-                        inventoryData[item.Name] = (inventoryData[item.Name] or 0) + 1
+                        counts[item.Name] = (counts[item.Name] or 0) + 1
+                    end
+                    for name, count in pairs(counts) do
+                        inventoryData[name] = { count = count }
                     end
                 end
 
@@ -157,7 +161,11 @@ local function updateCloud(removeAccount)
                 if character then
                     for _, item in ipairs(character:GetChildren()) do
                         if item:IsA("Tool") then
-                            inventoryData[item.Name] = (inventoryData[item.Name] or 0) + 1
+                            if not inventoryData[item.Name] then
+                                inventoryData[item.Name] = { count = 1 }
+                            else
+                                inventoryData[item.Name].count = inventoryData[item.Name].count + 1
+                            end
                         end
                     end
                 end
@@ -170,19 +178,19 @@ local function updateCloud(removeAccount)
                             local txt = gui.Text
                             if txt and (txt:find("Biji") or txt:find("Sekop") or txt:find("Bangun") or txt:find("Wortel") or txt:find("Stroberi")) then
                                 if #txt < 30 and not txt:find("Status") and not txt:find("Taman") then
-                                    inventoryData[txt] = 1
+                                    inventoryData[txt] = { count = 1 }
                                 end
                             end
                         end
                     end
                 end
                 
-                -- Kirim data terupdate ke Cloud
+                -- Kirim data terupdate ke Cloud (disesuaikan dengan properti 'shekles' dan 'items' di web)
                 currentAccounts[AccountKey] = {
                     LastUpdate = os.time(),
-                    Shekles = sheklesValue,
-                    Stats = { Shekles = sheklesValue },
-                    Inventory = inventoryData
+                    shekles = sheklesValue,
+                    items = inventoryData,
+                    metrics = { fps = 60, ping = 50 }
                 }
             end
             
