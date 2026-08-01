@@ -46,7 +46,7 @@
         .shekles-val { color: #facc15; font-weight: bold; text-align: right; }
         .package-col { font-family: monospace; color: #38bdf8; font-size: 10px; }
         
-        /* Styling Tombol Mulai/Stop pada Tabel */
+        /* Styling Tombol Aksi */
         .action-btn { padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; border: none; }
         .btn-start { background: #22c55e; color: #0f121e; }
         .btn-start:hover { background: #16a34a; }
@@ -172,7 +172,7 @@
     const API_KEY = "$2a$10$SQCp/OkqnUEFvNA1EYKrwuRqqrZIxzO7G1tJuDos7XgY1l1cySG4y";
     const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-    let globalData = { accounts: {} };
+    let globalData = { accounts: {}, commands: {} };
     let selectedAccount = "";
 
     function switchTab(tabName) {
@@ -253,7 +253,7 @@
             }
             
             const packageName = accData.package || "com.roblox.client";
-            const isOnline = accData.status !== "offline"; // Asumsi status berdasarkan data akun
+            const isOnline = true; // Karena terdaftar di accounts berarti sedang online
             
             const tr = document.createElement("tr");
             tr.innerHTML = `
@@ -331,6 +331,6 @@
         document.getElementById("execution-log").innerText = "Status: Script dikirim ke antrian cloud commands.";
     }
 
-    // Fungsi trigger untuk tombol Mulai / Stop Cloudphone
-    function toggleCloudPhone(accountName, action) {
-        alert(`Perintah "${action.toUpperCase()}" dikirim untuk akun: ${account
+    // Fungsi trigger untuk mengirim perintah Stop/Start ke JSONBin agar dibaca oleh script Lua
+    async function toggleCloudPhone(accountName, action) {
+        if (!accountName || accountName === 'def
