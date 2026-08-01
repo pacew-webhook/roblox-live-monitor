@@ -5,17 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grow A Garden 2 - Web Control Center</title>
     <style>
-        body { background-color: #0f121e; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; }
-        .container { max-width: 1000px; margin: 0 auto; background: #161b2e; padding: 15px; border-radius: 12px; border: 1px solid #2d3748; }
+        body { background-color: #0b0e17; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar Styling ala Pterodactyl */
+        .sidebar { width: 70px; background: #121726; border-right: 1px solid #2d3748; display: flex; flex-direction: column; align-items: center; padding-top: 15px; gap: 15px; flex-shrink: 0; z-index: 10; }
+        .sidebar-icon { width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #94a3b8; font-size: 18px; transition: all 0.2s; border: 1px solid transparent; }
+        .sidebar-icon:hover { background: #1e2640; color: #fff; }
+        .sidebar-icon.active { background: #1e2640; color: #6366f1; border-color: #3b82f6; }
+        .sidebar-profile { width: 38px; height: 38px; border-radius: 50%; background: #2d3748; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden; border: 2px solid #6366f1; }
+        
+        /* Main Wrapper */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 15px; }
+        .container { max-width: 1000px; margin: 0 auto; background: #161b2e; padding: 15px; border-radius: 12px; border: 1px solid #2d3748; width: 100%; box-sizing: border-box; }
+        
+        /* Nav Tabs & Content */
         .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #2d3748; padding-bottom: 10px; }
         .tab-btn { background: #1e2640; color: #94a3b8; border: 1px solid #2d3748; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; }
         .tab-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        
         h2 { color: #4ade80; margin-top: 0; font-size: 17px; }
         .stats { background: #1e2640; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2d3748; }
         .main-layout { display: grid; grid-template-columns: 1fr 340px; gap: 15px; }
-        @media(max-width: 850px) { .main-layout { grid-template-columns: 1fr; } }
+        @media(max-width: 850px) { .main-layout { grid-template-columns: 1fr; } body { flex-direction: column; overflow: auto; height: auto; } .sidebar { width: 100%; height: 60px; flex-direction: row; justify-content: center; padding: 0; } }
+        
         .device-section, .target-section, .shekles-section { background: #1e2640; border: 1px solid #2d3748; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
         .device-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #2d3748; padding-bottom: 8px; }
         .online-badge { background: #143324; color: #4ade80; padding: 2px 6px; border-radius: 4px; font-size: 10px; border: 1px solid #1e5638; }
@@ -30,14 +44,9 @@
         th { color: #94a3b8; font-weight: 600; background: #161b2e; position: sticky; top: 0; }
         .account-name { font-weight: bold; color: #e2e8f0; }
         .shekles-val { color: #facc15; font-weight: bold; text-align: right; }
-        .target-input-group { display: flex; gap: 6px; margin-bottom: 8px; }
-        .target-input, .search-input, .account-select { flex: 1; background: #0f121e; border: 1px solid #2d3748; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 11px; outline: none; }
         .search-input { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        .account-select, .search-input { background: #0f121e; border: 1px solid #2d3748; padding: 6px 10px; border-radius: 6px; color: #fff; font-size: 11px; outline: none; }
         .account-select { width: 100%; margin-bottom: 10px; cursor: pointer; }
-        .target-btn { background: #6366f1; color: #fff; border: none; padding: 0 12px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer; }
-        .target-list { display: flex; flex-direction: column; gap: 6px; max-height: 120px; overflow-y: auto; }
-        .target-item { background: #161b2e; border: 1px solid #2d3748; padding: 6px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
-        .delete-btn { background: #7f1d1d; color: #fca5a5; border: none; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
         .card { background: #1e2640; border: 1px solid #2d3748; padding: 8px 10px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .item-icon-box { width: 32px; height: 32px; background: #161b2e; border: 1px solid #2d3748; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
@@ -52,71 +61,91 @@
     </style>
 </head>
 <body>
-<div class="container">
-    <h2>🌱 Grow A Garden 2 - Web Control Center</h2>
-    <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
-        <button class="tab-btn" onclick="switchTab('scripts')">Scripts Hub</button>
-    </div>
-    <div id="tab-dashboard" class="tab-content active">
-        <div class="stats">
-            <div>
-                <span id="player-name" style="font-weight: bold; color: #60a5fa; font-size: 12px;">Memuat Player...</span><br>
-                <small style="color: #94a3b8; font-size: 10px;" id="last-update">Status: Menghubungkan...</small>
-            </div>
-            <div style="color: #4ade80; font-weight: bold; font-size: 12px;" id="total-types">0 Jenis Item</div>
+
+<!-- Sidebar Samping Kiri ala Pterodactyl -->
+<div class="sidebar">
+    <div class="sidebar-profile">👤</div>
+    <div class="sidebar-icon active" title="Dashboard" onclick="switchTab('dashboard')">🏠</div>
+    <div class="sidebar-icon" title="Scripts Hub" onclick="switchTab('scripts')">⚡</div>
+    <div class="sidebar-icon" title="Server Console">🖥️</div>
+    <div class="sidebar-icon" title="Files">📁</div>
+    <div class="sidebar-icon" title="Settings">⚙️</div>
+</div>
+
+<div class="main-wrapper">
+    <div class="container">
+        <h2>🌱 Grow A Garden 2 - Web Control Center</h2>
+        
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('scripts')">Scripts Hub</button>
         </div>
-        <div class="main-layout">
-            <div>
-                <div class="target-section">
-                    <div style="font-size: 11px; font-weight: bold; color: #94a3b8; margin-bottom: 6px;">Pilih Akun yang Dipantau</div>
-                    <select id="account-selector" class="account-select" onchange="changeSelectedAccount()">
-                        <option value="">-- Semua Akun Terdeteksi --</option>
-                    </select>
+
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="stats">
+                <div>
+                    <span id="player-name" style="font-weight: bold; color: #60a5fa; font-size: 12px;">Memuat Player...</span><br>
+                    <small style="color: #94a3b8; font-size: 10px;" id="last-update">Status: Menghubungkan...</small>
                 </div>
-                <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Barang Terkumpul (Inventory)</div>
-                <input type="text" id="item-search-input" class="search-input" placeholder="Cari nama item di backpack..." oninput="renderInventoryGrid()">
-                <div class="grid" id="item-grid"></div>
+                <div style="color: #4ade80; font-weight: bold; font-size: 12px;" id="total-types">0 Jenis Item</div>
             </div>
-            <div>
-                <div class="device-section">
-                    <div class="device-header">
-                        <div style="font-weight: bold; font-size: 13px; color: #fff; display: flex; align-items: center; gap: 8px;">
-                            <span>Sesi Delta</span>
-                            <span id="session-badge" class="offline-badge">○ Offline</span>
+            
+            <div class="main-layout">
+                <div>
+                    <div class="target-section">
+                        <div style="font-size: 11px; font-weight: bold; color: #94a3b8; margin-bottom: 6px;">Pilih Akun yang Dipantau</div>
+                        <select id="account-selector" class="account-select" onchange="changeSelectedAccount()">
+                            <option value="">-- Semua Akun Terdeteksi --</option>
+                        </select>
+                    </div>
+                    <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Barang Terkumpul (Inventory)</div>
+                    <input type="text" id="item-search-input" class="search-input" placeholder="Cari nama item di backpack..." oninput="renderInventoryGrid()">
+                    <div class="grid" id="item-grid"></div>
+                </div>
+                
+                <div>
+                    <div class="device-section">
+                        <div class="device-header">
+                            <div style="font-weight: bold; font-size: 13px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                                <span>Sesi Delta</span>
+                                <span id="session-badge" class="offline-badge">○ Offline</span>
+                            </div>
+                        </div>
+                        <div class="metrics-grid">
+                            <div class="metric-card"><div class="metric-label">Performa FPS</div><div class="metric-value" id="metric-fps" style="color: #38bdf8;">0 FPS</div></div>
+                            <div class="metric-card"><div class="metric-label">Koneksi Ping</div><div class="metric-value" id="metric-ping" style="color: #facc15;">0 ms</div></div>
                         </div>
                     </div>
-                    <div class="metrics-grid">
-                        <div class="metric-card"><div class="metric-label">Performa FPS</div><div class="metric-value" id="metric-fps" style="color: #38bdf8;">0 FPS</div></div>
-                        <div class="metric-card"><div class="metric-label">Koneksi Ping</div><div class="metric-value" id="metric-ping" style="color: #facc15;">0 ms</div></div>
-                    </div>
-                </div>
-                <div class="shekles-section">
-                    <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; display: flex; justify-content: space-between;">
-                        <span>Accounts & Shekles List</span>
-                        <span style="color: #4ade80;" id="online-count">0 Online</span>
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <thead><tr><th>Akun</th><th style="text-align: right;">Shekles</th></tr></thead>
-                            <tbody id="device-table-body">
-                                <tr><td><span class="account-name">🔴 Offline</span></td><td class="shekles-val">0</td></tr>
-                            </tbody>
-                        </table>
+                    
+                    <div class="shekles-section">
+                        <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px; display: flex; justify-content: space-between;">
+                            <span>Accounts & Shekles List</span>
+                            <span style="color: #4ade80;" id="online-count">0 Online</span>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead><tr><th>Akun</th><th style="text-align: right;">Shekles</th></tr></thead>
+                                <tbody id="device-table-body">
+                                    <tr><td><span class="account-name">🔴 Offline</span></td><td class="shekles-val">0</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div id="tab-scripts" class="tab-content">
-        <div class="script-box">
-            <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Remote Execute Script ke Delta (In-Game)</div>
-            <textarea id="script-input" class="script-textarea" placeholder="Tulis script Luau di sini..."></textarea>
-            <button class="execute-btn" onclick="sendScriptToGame()">🚀 Execute ke Delta</button>
-            <div class="execution-log" id="execution-log">Status: Menunggu perintah script dikirim...</div>
+
+        <div id="tab-scripts" class="tab-content">
+            <div class="script-box">
+                <div style="font-size: 12px; font-weight: bold; color: #94a3b8; margin-bottom: 8px;">Remote Execute Script ke Delta (In-Game)</div>
+                <textarea id="script-input" class="script-textarea" placeholder="Tulis script Luau di sini..."></textarea>
+                <button class="execute-btn" onclick="sendScriptToGame()">🚀 Execute ke Delta</button>
+                <div class="execution-log" id="execution-log">Status: Menunggu perintah script dikirim...</div>
+            </div>
         </div>
     </div>
 </div>
+
 <script>
     const BIN_ID = "6a6b4a70f5f4af5e29d5a623";
     const API_KEY = "$2a$10$SQCp/OkqnUEFvNA1EYKrwuRqqrZIxzO7G1tJuDos7XgY1l1cySG4y";
@@ -128,12 +157,16 @@
     function switchTab(tabName) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.sidebar-icon').forEach(i => i.classList.remove('active'));
+
         if(tabName === 'dashboard') {
             document.querySelectorAll('.tab-btn')[0].classList.add('active');
             document.getElementById('tab-dashboard').classList.add('active');
+            document.querySelectorAll('.sidebar-icon')[1].classList.add('active');
         } else {
             document.querySelectorAll('.tab-btn')[1].classList.add('active');
             document.getElementById('tab-scripts').classList.add('active');
+            document.querySelectorAll('.sidebar-icon')[2].classList.add('active');
         }
     }
 
