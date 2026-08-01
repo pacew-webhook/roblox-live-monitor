@@ -12,6 +12,43 @@ local AccountKey = LocalPlayer.Name
 local httpRequest = (syn and syn.request) or (fluxus and fluxus.request) or request or http_request
 if not httpRequest then return end
 
+-- === DETEKSI OTOMATIS PACKAGE BERDASARKAN EXECUTOR ===
+local function getAutomaticPackageName()
+    local detectedPackage = "com.roblox.client" -- Default Fallback
+    
+    pcall(function()
+        local execName = ""
+        if identifyexecutor then
+            local name, version = identifyexecutor()
+            execName = tostring(name or ""):lower()
+        elseif getexecutorname then
+            local name, version = getexecutorname()
+            execName = tostring(name or ""):lower()
+        end
+        
+        -- Sesuaikan nama package otomatis berdasarkan jenis executor yang terdeteksi
+        if execName:find("delta") then
+            detectedPackage = "com.roblox.client" -- Ubah jika Delta memiliki package khusus
+        elseif execName:find("fluxus") then
+            detectedPackage = "com.roblox.client"
+        elseif execName:find("codex") then
+            detectedPackage = "com.roblox.client"
+        elseif execName:find("hydrogen") then
+            detectedPackage = "com.roblox.client"
+        else
+            -- Cek juga berdasarkan keberadaan file config lokal jika ada
+            if readfile and pcall(readfile, "package_config.txt") then
+                local content = readfile("package_config.txt"):gsub("%s+", "")
+                if content ~= "" then
+                    detectedPackage = content
+                end
+            end
+        end
+    end)
+    
+    return detectedPackage
+end
+
 -- === GUI DI GAME ===
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MultiAccountSyncGUI"
@@ -182,7 +219,8 @@ local function sendDataToCloud()
                 end
             end)
             
-            local packageName = "com.roblox.client"
+            -- Memanggil fungsi deteksi otomatis package
+            local packageName = getAutomaticPackageName()
             
             currentAccounts[AccountKey] = {
                 LastUpdate = os.time(),
