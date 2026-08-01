@@ -1,6 +1,6 @@
 -- Konfigurasi Koneksi Cloud
 local BIN_ID = "6a6b4a70f5f4af5e29d5a623"
-local API_KEY = "$2a$10$SQCp/OkqnUEfvNA1EYKrwuRqqrZIxzO7G1tJuDos7XgY1l1cySG4y"
+local API_KEY = "$2a$10$SQCp/OkqnUEFvNA1EYKrwuRqqrZIxzO7G1tJuDos7XgY1l1cySG4y"
 local URL = "https://api.jsonbin.io/v3/b/" .. BIN_ID
 
 local HttpService = game:GetService("HttpService")
