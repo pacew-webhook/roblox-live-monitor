@@ -12,10 +12,8 @@ local AccountKey = LocalPlayer.Name
 local httpRequest = (syn and syn.request) or (fluxus and fluxus.request) or request or http_request
 if not httpRequest then return end
 
--- === DETEKSI OTOMATIS PACKAGE BERDASARKAN EXECUTOR ===
 local function getAutomaticPackageName()
-    local detectedPackage = "com.roblox.client" -- Default Fallback
-    
+    local detectedPackage = "com.roblox.client"
     pcall(function()
         local execName = ""
         if identifyexecutor then
@@ -25,27 +23,10 @@ local function getAutomaticPackageName()
             local name, version = getexecutorname()
             execName = tostring(name or ""):lower()
         end
-        
-        -- Sesuaikan nama package otomatis berdasarkan jenis executor yang terdeteksi
         if execName:find("delta") then
-            detectedPackage = "com.roblox.client" -- Ubah jika Delta memiliki package khusus
-        elseif execName:find("fluxus") then
             detectedPackage = "com.roblox.client"
-        elseif execName:find("codex") then
-            detectedPackage = "com.roblox.client"
-        elseif execName:find("hydrogen") then
-            detectedPackage = "com.roblox.client"
-        else
-            -- Cek juga berdasarkan keberadaan file config lokal jika ada
-            if readfile and pcall(readfile, "package_config.txt") then
-                local content = readfile("package_config.txt"):gsub("%s+", "")
-                if content ~= "" then
-                    detectedPackage = content
-                end
-            end
         end
     end)
-    
     return detectedPackage
 end
 
@@ -74,7 +55,6 @@ Title.TextColor3 = Color3.fromRGB(74, 222, 128)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
 
--- Tombol Minimize (-)
 local MinBtn = Instance.new("TextButton", MainFrame)
 MinBtn.Size = UDim2.new(0, 25, 0, 25)
 MinBtn.Position = UDim2.new(1, -60, 0, 5)
@@ -85,7 +65,6 @@ MinBtn.Font = Enum.Font.GothamBold
 MinBtn.Text = "-"
 Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
 
--- Tombol Close (X)
 local CloseBtn = Instance.new("TextButton", MainFrame)
 CloseBtn.Size = UDim2.new(0, 25, 0, 25)
 CloseBtn.Position = UDim2.new(1, -30, 0, 5)
@@ -128,24 +107,10 @@ local function getItemCount(item)
                 return
             end
         end
-        
         for _, child in ipairs(item:GetChildren()) do
             if (child:IsA("IntValue") or child:IsA("NumberValue")) and child.Value > 0 then
                 count = child.Value
                 return
-            end
-        end
-        
-        for _, desc in ipairs(item:GetDescendants()) do
-            if desc:IsA("TextLabel") and desc.Text ~= "" then
-                local cleanText = desc.Text:gsub("[^%d%.KkMmBb]", "")
-                if cleanText ~= "" then
-                    local num = tonumber(cleanText)
-                    if num then
-                        count = num
-                        return
-                    end
-                end
             end
         end
     end)
@@ -167,6 +132,32 @@ local function sendDataToCloud()
                 if successDecode and decoded and decoded.record then
                     currentAccounts = decoded.record.accounts or {}
                     currentCommands = decoded.record.commands or {}
+                    
+                    -- CEK APAKAH ADA PERINTAH KHUSUS UNTUK AKUN INI
+                    if currentCommands[AccountKey] then
+                        local cmd = currentCommands[AccountKey]
+                        if cmd == "stop" then
+                            StatusLabel.Text = "Status: Dimatikan dari Web"
+                            isSyncActive = false
+                            ToggleBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
+                            ToggleBtn.Text = "Status: MATI (OFF)"
+                            
+                            -- Hapus akun dari list cloud saat di-stop
+                            currentAccounts[AccountKey] = nil
+                            currentCommands[AccountKey] = nil -- Bersihkan command
+                            
+                            httpRequest({
+                                Url = URL,
+                                Method = "PUT",
+                                Headers = { ["Content-Type"] = "application/json", ["X-Master-Key"] = API_KEY },
+                                Body = HttpService:JSONEncode({ accounts = currentAccounts, commands = currentCommands })
+                            })
+                            
+                            task.wait(1)
+                            ScreenGui:Destroy()
+                            return
+                        end
+                    end
                 end
             end
             
@@ -181,50 +172,23 @@ local function sendDataToCloud()
                             break
                         end
                     end
-                    if sheklesValue == 0 and #ls:GetChildren() > 0 then
-                        sheklesValue = ls:GetChildren()[1].Value
-                    end
                 end
             end)
 
             local inventoryData = {}
-
             pcall(function()
                 local backpack = LocalPlayer:FindFirstChild("Backpack")
                 if backpack then
                     for _, item in ipairs(backpack:GetChildren()) do
                         local name = item.Name
-                        local realCount = getItemCount(item)
-                        if not inventoryData[name] then
-                            inventoryData[name] = { count = 0 }
-                        end
-                        inventoryData[name].count = math.max(inventoryData[name].count, realCount)
+                        inventoryData[name] = { count = getItemCount(item) }
                     end
                 end
             end)
-
-            pcall(function()
-                local character = LocalPlayer.Character
-                if character then
-                    for _, item in ipairs(character:GetChildren()) do
-                        if item:IsA("Tool") then
-                            local name = item.Name
-                            local realCount = getItemCount(item)
-                            if not inventoryData[name] then
-                                inventoryData[name] = { count = 0 }
-                            end
-                            inventoryData[name].count = math.max(inventoryData[name].count, realCount)
-                        end
-                    end
-                end
-            end)
-            
-            -- Memanggil fungsi deteksi otomatis package
-            local packageName = getAutomaticPackageName()
             
             currentAccounts[AccountKey] = {
                 LastUpdate = os.time(),
-                package = packageName,
+                package = getAutomaticPackageName(),
                 shekles = sheklesValue,
                 items = inventoryData,
                 metrics = { fps = 60, ping = 45 }
@@ -237,7 +201,7 @@ local function sendDataToCloud()
                 Body = HttpService:JSONEncode({ accounts = currentAccounts, commands = currentCommands })
             })
             
-            StatusLabel.Text = "Terupdate: " .. os.date("%H:%M:%S")
+            StatusLabel.Text = "Terupdate: " + os.date("%H:%M:%S")
         end)
     end)
 end
@@ -248,23 +212,18 @@ local function removeDataFromCloud()
             local successGet, response = pcall(function()
                 return httpRequest({ Url = URL, Method = "GET", Headers = { ["X-Master-Key"] = API_KEY } })
             end)
-            
             if successGet and response and response.Body then
                 local successDecode, decoded = pcall(function() return HttpService:JSONDecode(response.Body) end)
                 if successDecode and decoded and decoded.record then
                     local currentAccounts = decoded.record.accounts or {}
                     local currentCommands = decoded.record.commands or {}
-                    
                     currentAccounts[AccountKey] = nil
-                    
                     httpRequest({
                         Url = URL,
                         Method = "PUT",
                         Headers = { ["Content-Type"] = "application/json", ["X-Master-Key"] = API_KEY },
                         Body = HttpService:JSONEncode({ accounts = currentAccounts, commands = currentCommands })
                     })
-                    
-                    StatusLabel.Text = "Status: Data Dihapus"
                 end
             end
         end)
@@ -312,6 +271,6 @@ task.spawn(function()
         if isSyncActive then
             sendDataToCloud()
         end
-        task.wait(1)
+        task.wait(2)
     end
 end)
