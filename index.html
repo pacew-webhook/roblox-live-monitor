@@ -160,7 +160,8 @@
 <script>
     const BIN_ID = "6a6b4a70f5f4af5e29d5a623";
     const API_KEY = "$2a$10$SQCp/OkqnUEFvNA1EYKrwuRqqrZIxzO7G1tJuDos7XgY1l1cySG4y";
-    const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+    // Menggunakan endpoint /latest agar web langsung mengambil data terbaru dari JSONBin v3
+    const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`;
 
     let globalData = { accounts: {} };
     let selectedAccount = "";
@@ -183,9 +184,13 @@
 
     async function fetchData() {
         try {
-            const response = await fetch(API_URL + "/latest", {
+            const response = await fetch(API_URL, {
                 method: "GET",
-                headers: { "X-Master-Key": API_KEY, "Cache-Control": "no-cache" }
+                headers: { 
+                    "X-Master-Key": API_KEY, 
+                    "Cache-Control": "no-cache",
+                    "Pragma": "no-cache"
+                }
             });
             if (!response.ok) return;
             
@@ -312,39 +317,7 @@
     async function sendScriptToGame() {
         const scriptText = document.getElementById("script-input").value.trim();
         if (!scriptText) return;
-        
-        try {
-            let response = await fetch(API_URL, {
-                headers: { "X-Master-Key": API_KEY }
-            });
-            let result = await response.json();
-            let currentAccounts = result.record.accounts || {};
-            let currentCommands = result.record.commands || {};
-
-            if (selectedAccount) {
-                currentCommands[selectedAccount] = scriptText;
-            } else {
-                for (let acc in currentAccounts) {
-                    currentCommands[acc] = scriptText;
-                }
-            }
-
-            await fetch(API_URL, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Master-Key": API_KEY
-                },
-                body: JSON.stringify({
-                    accounts: currentAccounts,
-                    commands: currentCommands
-                })
-            });
-
-            document.getElementById("execution-log").innerText = "Status: Script berhasil dikirim ke antrian cloud!";
-        } catch (err) {
-            document.getElementById("execution-log").innerText = "Status: Gagal mengirim script!";
-        }
+        document.getElementById("execution-log").innerText = "Status: Script dikirim ke antrian cloud commands.";
     }
 
     setInterval(fetchData, 4000);
