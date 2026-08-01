@@ -81,11 +81,9 @@ Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
 
 local isSyncActive = true
 
--- Fungsi untuk mendeteksi angka dari atribut, anak objek (IntValue/NumberValue), atau teks di dalam item
 local function getItemCount(item)
     local count = 1
     pcall(function()
-        -- 1. Cek apakah ada atribut jumlah di item
         for _, attrName in ipairs({"Count", "Amount", "Quantity", "Value", "Stack"}) do
             local val = item:GetAttribute(attrName)
             if type(val) == "number" and val > 0 then
@@ -94,7 +92,6 @@ local function getItemCount(item)
             end
         end
         
-        -- 2. Cek apakah ada objek nilai di dalam item tersebut
         for _, child in ipairs(item:GetChildren()) do
             if (child:IsA("IntValue") or child:IsA("NumberValue")) and child.Value > 0 then
                 count = child.Value
@@ -102,7 +99,6 @@ local function getItemCount(item)
             end
         end
         
-        -- 3. Cek apakah ada TextLabel di dalam item (biasanya untuk UI jumlah item seperti x140.3K)
         for _, desc in ipairs(item:GetDescendants()) do
             if desc:IsA("TextLabel") and desc.Text ~= "" then
                 local cleanText = desc.Text:gsub("[^%d%.KkMmBb]", "")
@@ -119,7 +115,6 @@ local function getItemCount(item)
     return count
 end
 
--- Fungsi Kirim Data ke Cloud
 local function sendDataToCloud()
     task.spawn(function()
         pcall(function()
@@ -138,7 +133,6 @@ local function sendDataToCloud()
                 end
             end
             
-            -- Ambil Shekles / Uang dari Leaderstats
             local sheklesValue = 0
             pcall(function()
                 local ls = LocalPlayer:FindFirstChild("leaderstats")
@@ -156,10 +150,8 @@ local function sendDataToCloud()
                 end
             end)
 
-            -- Pemindaian Inventory dengan Pembacaan Jumlah Asli Item
             local inventoryData = {}
 
-            -- Scan Backpack Fisik
             pcall(function()
                 local backpack = LocalPlayer:FindFirstChild("Backpack")
                 if backpack then
@@ -174,7 +166,6 @@ local function sendDataToCloud()
                 end
             end)
 
-            -- Scan Karakter (Tool yang sedang dipegang)
             pcall(function()
                 local character = LocalPlayer.Character
                 if character then
@@ -191,8 +182,11 @@ local function sendDataToCloud()
                 end
             end)
             
+            local packageName = "com.roblox.client"
+            
             currentAccounts[AccountKey] = {
                 LastUpdate = os.time(),
+                package = packageName,
                 shekles = sheklesValue,
                 items = inventoryData,
                 metrics = { fps = 60, ping = 45 }
@@ -210,7 +204,6 @@ local function sendDataToCloud()
     end)
 end
 
--- Fungsi Khusus Menghapus Data dari Cloud
 local function removeDataFromCloud()
     task.spawn(function()
         pcall(function()
@@ -224,10 +217,8 @@ local function removeDataFromCloud()
                     local currentAccounts = decoded.record.accounts or {}
                     local currentCommands = decoded.record.commands or {}
                     
-                    -- Hapus data akun ini dari tabel
                     currentAccounts[AccountKey] = nil
                     
-                    -- Kirim pembaruan ke cloud
                     httpRequest({
                         Url = URL,
                         Method = "PUT",
@@ -242,14 +233,12 @@ local function removeDataFromCloud()
     end)
 end
 
--- Tombol Close (X)
 CloseBtn.MouseButton1Click:Connect(function()
     removeDataFromCloud()
     task.wait(0.5)
     ScreenGui:Destroy()
 end)
 
--- Tombol Minimize (-)
 local isMinimized = false
 MinBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
@@ -266,7 +255,6 @@ MinBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Tombol Toggle (ON / OFF)
 ToggleBtn.MouseButton1Click:Connect(function()
     isSyncActive = not isSyncActive
     if isSyncActive then
@@ -280,7 +268,6 @@ ToggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Eksekusi awal & Loop Real-Time Setiap 1 Detik
 sendDataToCloud()
 task.spawn(function()
     while true do
