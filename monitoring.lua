@@ -119,7 +119,8 @@ local function getItemCount(item)
     return count
 end
 
-local function sendDataToCloud(isRemove)
+-- Fungsi Kirim Data ke Cloud
+local function sendDataToCloud()
     task.spawn(function()
         pcall(function()
             local successGet, response = pcall(function()
@@ -137,35 +138,48 @@ local function sendDataToCloud(isRemove)
                 end
             end
             
-            if isRemove then
-                currentAccounts[AccountKey] = nil
-            else
-                -- Ambil Shekles / Uang dari Leaderstats
-                local sheklesValue = 0
-                pcall(function()
-                    local ls = LocalPlayer:FindFirstChild("leaderstats")
-                    if ls then
-                        for _, s in ipairs(ls:GetChildren()) do
-                            local sName = s.Name:lower()
-                            if sName:find("shekle") or sName:find("money") or sName:find("cash") or sName:find("coin") then
-                                sheklesValue = s.Value
-                                break
-                            end
-                        end
-                        if sheklesValue == 0 and #ls:GetChildren() > 0 then
-                            sheklesValue = ls:GetChildren()[1].Value
+            -- Ambil Shekles / Uang dari Leaderstats
+            local sheklesValue = 0
+            pcall(function()
+                local ls = LocalPlayer:FindFirstChild("leaderstats")
+                if ls then
+                    for _, s in ipairs(ls:GetChildren()) do
+                        local sName = s.Name:lower()
+                        if sName:find("shekle") or sName:find("money") or sName:find("cash") or sName:find("coin") then
+                            sheklesValue = s.Value
+                            break
                         end
                     end
-                end)
+                    if sheklesValue == 0 and #ls:GetChildren() > 0 then
+                        sheklesValue = ls:GetChildren()[1].Value
+                    end
+                end
+            end)
 
-                -- Pemindaian Inventory dengan Pembacaan Jumlah Asli Item
-                local inventoryData = {}
+            -- Pemindaian Inventory dengan Pembacaan Jumlah Asli Item
+            local inventoryData = {}
 
-                -- Scan Backpack Fisik
-                pcall(function()
-                    local backpack = LocalPlayer:FindFirstChild("Backpack")
-                    if backpack then
-                        for _, item in ipairs(backpack:GetChildren()) do
+            -- Scan Backpack Fisik
+            pcall(function()
+                local backpack = LocalPlayer:FindFirstChild("Backpack")
+                if backpack then
+                    for _, item in ipairs(backpack:GetChildren()) do
+                        local name = item.Name
+                        local realCount = getItemCount(item)
+                        if not inventoryData[name] then
+                            inventoryData[name] = { count = 0 }
+                        end
+                        inventoryData[name].count = math.max(inventoryData[name].count, realCount)
+                    end
+                end
+            end)
+
+            -- Scan Karakter (Tool yang sedang dipegang)
+            pcall(function()
+                local character = LocalPlayer.Character
+                if character then
+                    for _, item in ipairs(character:GetChildren()) do
+                        if item:IsA("Tool") then
                             local name = item.Name
                             local realCount = getItemCount(item)
                             if not inventoryData[name] then
@@ -174,32 +188,15 @@ local function sendDataToCloud(isRemove)
                             inventoryData[name].count = math.max(inventoryData[name].count, realCount)
                         end
                     end
-                end)
-
-                -- Scan Karakter (Tool yang sedang dipegang)
-                pcall(function()
-                    local character = LocalPlayer.Character
-                    if character then
-                        for _, item in ipairs(character:GetChildren()) do
-                            if item:IsA("Tool") then
-                                local name = item.Name
-                                local realCount = getItemCount(item)
-                                if not inventoryData[name] then
-                                    inventoryData[name] = { count = 0 }
-                                end
-                                inventoryData[name].count = math.max(inventoryData[name].count, realCount)
-                            end
-                        end
-                    end
-                end)
-                
-                currentAccounts[AccountKey] = {
-                    LastUpdate = os.time(),
-                    shekles = sheklesValue,
-                    items = inventoryData,
-                    metrics = { fps = 60, ping = 45 }
-                }
-            end
+                end
+            end)
+            
+            currentAccounts[AccountKey] = {
+                LastUpdate = os.time(),
+                shekles = sheklesValue,
+                items = inventoryData,
+                metrics = { fps = 60, ping = 45 }
+            }
             
             httpRequest({
                 Url = URL,
@@ -208,10 +205,38 @@ local function sendDataToCloud(isRemove)
                 Body = HttpService:JSONEncode({ accounts = currentAccounts, commands = currentCommands })
             })
             
-            if not isRemove then
-                StatusLabel.Text = "Terupdate: " .. os.date("%H:%M:%S")
-            else
-                StatusLabel.Text = "Status: Data Dihapus"
+            StatusLabel.Text = "Terupdate: " .. os.date("%H:%M:%S")
+        end)
+    end)
+end
+
+-- Fungsi Khusus Menghapus Data dari Cloud
+local function removeDataFromCloud()
+    task.spawn(function()
+        pcall(function()
+            local successGet, response = pcall(function()
+                return httpRequest({ Url = URL, Method = "GET", Headers = { ["X-Master-Key"] = API_KEY } })
+            end)
+            
+            if successGet and response and response.Body then
+                local successDecode, decoded = pcall(function() return HttpService:JSONDecode(response.Body) end)
+                if successDecode and decoded and decoded.record then
+                    local currentAccounts = decoded.record.accounts or {}
+                    local currentCommands = decoded.record.commands or {}
+                    
+                    -- Hapus data akun ini dari tabel
+                    currentAccounts[AccountKey] = nil
+                    
+                    -- Kirim pembaruan ke cloud
+                    httpRequest({
+                        Url = URL,
+                        Method = "PUT",
+                        Headers = { ["Content-Type"] = "application/json", ["X-Master-Key"] = API_KEY },
+                        Body = HttpService:JSONEncode({ accounts = currentAccounts, commands = currentCommands })
+                    })
+                    
+                    StatusLabel.Text = "Status: Data Dihapus"
+                end
             end
         end)
     end)
@@ -219,7 +244,7 @@ end
 
 -- Tombol Close (X)
 CloseBtn.MouseButton1Click:Connect(function()
-    sendDataToCloud(true)
+    removeDataFromCloud()
     task.wait(0.5)
     ScreenGui:Destroy()
 end)
@@ -241,25 +266,26 @@ MinBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Tombol Toggle (ON / OFF)
 ToggleBtn.MouseButton1Click:Connect(function()
     isSyncActive = not isSyncActive
     if isSyncActive then
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(34, 197, 94)
         ToggleBtn.Text = "Status: AKTIF (ON)"
-        sendDataToCloud(false)
+        sendDataToCloud()
     else
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
         ToggleBtn.Text = "Status: MATI (OFF)"
-        sendDataToCloud(true)
+        removeDataFromCloud()
     end
 end)
 
 -- Eksekusi awal & Loop Real-Time Setiap 1 Detik
-sendDataToCloud(false)
+sendDataToCloud()
 task.spawn(function()
     while true do
         if isSyncActive then
-            sendDataToCloud(false)
+            sendDataToCloud()
         end
         task.wait(1)
     end
