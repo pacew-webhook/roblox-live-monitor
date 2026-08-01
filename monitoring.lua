@@ -10,36 +10,25 @@ local CoreGui = game:GetService("CoreGui")
 local AccountKey = LocalPlayer.Name 
 
 local httpRequest = (syn and syn.request) or (fluxus and fluxus.request) or request or http_request
-if not httpRequest then
-    warn("[Delta Error] Executor tidak mendukung fungsi HTTP request!")
-    return
-end
+if not httpRequest then return end
 
--- === MEMBUAT TAMPILAN GUI DI GAME ===
+-- === GUI DI GAME ===
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MultiAccountSyncGUI"
 ScreenGui.ResetOnSpawn = false
-pcall(function()
-    ScreenGui.Parent = CoreGui
-end)
-if not ScreenGui.Parent then
-    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-end
+pcall(function() ScreenGui.Parent = CoreGui end)
+if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
-local MainFrame = Instance.new("Frame")
+local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 220, 0, 140)
 MainFrame.Position = UDim2.new(0.05, 0, 0.2, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(22, 27, 46)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 10)
-UICorner.Parent = MainFrame
-
-local Title = Instance.new("TextLabel")
+local Title = Instance.new("TextLabel", MainFrame)
 Title.Size = UDim2.new(1, -70, 0, 35)
 Title.Position = UDim2.new(0, 10, 0, 0)
 Title.BackgroundTransparency = 1
@@ -47,10 +36,9 @@ Title.Text = "🌱 " .. LocalPlayer.Name
 Title.TextColor3 = Color3.fromRGB(74, 222, 128)
 Title.TextSize = 12
 Title.Font = Enum.Font.GothamBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = MainFrame
 
-local MinBtn = Instance.new("TextButton")
+-- Tombol Minimize (-)
+local MinBtn = Instance.new("TextButton", MainFrame)
 MinBtn.Size = UDim2.new(0, 25, 0, 25)
 MinBtn.Position = UDim2.new(1, -60, 0, 5)
 MinBtn.BackgroundColor3 = Color3.fromRGB(59, 130, 246)
@@ -58,10 +46,10 @@ MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 MinBtn.TextSize = 12
 MinBtn.Font = Enum.Font.GothamBold
 MinBtn.Text = "-"
-MinBtn.Parent = MainFrame
 Instance.new("UICorner", MinBtn).CornerRadius = UDim.new(0, 6)
 
-local CloseBtn = Instance.new("TextButton")
+-- Tombol Close (X)
+local CloseBtn = Instance.new("TextButton", MainFrame)
 CloseBtn.Size = UDim2.new(0, 25, 0, 25)
 CloseBtn.Position = UDim2.new(1, -30, 0, 5)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
@@ -69,21 +57,19 @@ CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.TextSize = 12
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.Text = "X"
-CloseBtn.Parent = MainFrame
 Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
 
-local StatusLabel = Instance.new("TextLabel")
+local StatusLabel = Instance.new("TextLabel", MainFrame)
 StatusLabel.Size = UDim2.new(1, -20, 0, 30)
 StatusLabel.Position = UDim2.new(0, 10, 0, 40)
 StatusLabel.BackgroundColor3 = Color3.fromRGB(15, 18, 30)
 StatusLabel.TextColor3 = Color3.fromRGB(56, 189, 248)
 StatusLabel.TextSize = 11
 StatusLabel.Font = Enum.Font.Code
-StatusLabel.Text = "Status: Terhubung"
-StatusLabel.Parent = MainFrame
+StatusLabel.Text = "Status: Menghubungkan..."
 Instance.new("UICorner", StatusLabel).CornerRadius = UDim.new(0, 6)
 
-local ToggleBtn = Instance.new("TextButton")
+local ToggleBtn = Instance.new("TextButton", MainFrame)
 ToggleBtn.Size = UDim2.new(1, -20, 0, 35)
 ToggleBtn.Position = UDim2.new(0, 10, 0, 85)
 ToggleBtn.BackgroundColor3 = Color3.fromRGB(34, 197, 94)
@@ -91,131 +77,154 @@ ToggleBtn.TextColor3 = Color3.fromRGB(15, 18, 30)
 ToggleBtn.TextSize = 12
 ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.Text = "Status: AKTIF (ON)"
-ToggleBtn.Parent = MainFrame
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 6)
 
--- === FUNGSI SINKRONISASI CLOUD DENGAN PEMINDAIAN UI & BACKPACK ===
 local isSyncActive = true
 
-local function updateCloud(removeAccount)
+-- Fungsi untuk mendeteksi angka dari atribut, anak objek (IntValue/NumberValue), atau teks di dalam item
+local function getItemCount(item)
+    local count = 1
+    pcall(function()
+        -- 1. Cek apakah ada atribut jumlah di item
+        for _, attrName in ipairs({"Count", "Amount", "Quantity", "Value", "Stack"}) do
+            local val = item:GetAttribute(attrName)
+            if type(val) == "number" and val > 0 then
+                count = val
+                return
+            end
+        end
+        
+        -- 2. Cek apakah ada objek nilai di dalam item tersebut
+        for _, child in ipairs(item:GetChildren()) do
+            if (child:IsA("IntValue") or child:IsA("NumberValue")) and child.Value > 0 then
+                count = child.Value
+                return
+            end
+        end
+        
+        -- 3. Cek apakah ada TextLabel di dalam item (biasanya untuk UI jumlah item seperti x140.3K)
+        for _, desc in ipairs(item:GetDescendants()) do
+            if desc:IsA("TextLabel") and desc.Text ~= "" then
+                local cleanText = desc.Text:gsub("[^%d%.KkMmBb]", "")
+                if cleanText ~= "" then
+                    local num = tonumber(cleanText)
+                    if num then
+                        count = num
+                        return
+                    end
+                end
+            end
+        end
+    end)
+    return count
+end
+
+local function sendDataToCloud(isRemove)
     task.spawn(function()
         pcall(function()
             local successGet, response = pcall(function()
-                return httpRequest({
-                    Url = URL,
-                    Method = "GET",
-                    Headers = { ["X-Master-Key"] = API_KEY }
-                })
+                return httpRequest({ Url = URL, Method = "GET", Headers = { ["X-Master-Key"] = API_KEY } })
             end)
             
             local currentAccounts = {}
             local currentCommands = {}
             
             if successGet and response and response.Body then
-                local successDecode, decoded = pcall(function()
-                    return HttpService:JSONDecode(response.Body)
-                end)
+                local successDecode, decoded = pcall(function() return HttpService:JSONDecode(response.Body) end)
                 if successDecode and decoded and decoded.record then
                     currentAccounts = decoded.record.accounts or {}
                     currentCommands = decoded.record.commands or {}
                 end
             end
             
-            if removeAccount then
+            if isRemove then
                 currentAccounts[AccountKey] = nil
             else
-                -- 1. Ambil Shekles / Mata Uang
+                -- Ambil Shekles / Uang dari Leaderstats
                 local sheklesValue = 0
-                local ls = LocalPlayer:FindFirstChild("leaderstats")
-                if ls then
-                    local sTarget = ls:FindFirstChild("Shekles") or ls:FindFirstChild("Money") or ls:FindFirstChild("Cash")
-                    if sTarget and (sTarget:IsA("IntValue") or sTarget:IsA("NumberValue")) then
-                        sheklesValue = sTarget.Value
-                    else
+                pcall(function()
+                    local ls = LocalPlayer:FindFirstChild("leaderstats")
+                    if ls then
                         for _, s in ipairs(ls:GetChildren()) do
-                            if s:IsA("IntValue") or s:IsA("NumberValue") then
+                            local sName = s.Name:lower()
+                            if sName:find("shekle") or sName:find("money") or sName:find("cash") or sName:find("coin") then
                                 sheklesValue = s.Value
                                 break
                             end
                         end
+                        if sheklesValue == 0 and #ls:GetChildren() > 0 then
+                            sheklesValue = ls:GetChildren()[1].Value
+                        end
                     end
-                end
+                end)
 
-                -- 2. Ambil Inventory (Backpack + Hotbar PlayerGui)
+                -- Pemindaian Inventory dengan Pembacaan Jumlah Asli Item
                 local inventoryData = {}
-                
-                -- Cek Backpack
-                local backpack = LocalPlayer:FindFirstChild("Backpack")
-                if backpack then
-                    local counts = {}
-                    for _, item in ipairs(backpack:GetChildren()) do
-                        counts[item.Name] = (counts[item.Name] or 0) + 1
-                    end
-                    for name, count in pairs(counts) do
-                        inventoryData[name] = { count = count }
-                    end
-                end
 
-                -- Cek Character (Tool yang sedang dipegang)
-                local character = LocalPlayer.Character
-                if character then
-                    for _, item in ipairs(character:GetChildren()) do
-                        if item:IsA("Tool") then
-                            if not inventoryData[item.Name] then
-                                inventoryData[item.Name] = { count = 1 }
-                            else
-                                inventoryData[item.Name].count = inventoryData[item.Name].count + 1
+                -- Scan Backpack Fisik
+                pcall(function()
+                    local backpack = LocalPlayer:FindFirstChild("Backpack")
+                    if backpack then
+                        for _, item in ipairs(backpack:GetChildren()) do
+                            local name = item.Name
+                            local realCount = getItemCount(item)
+                            if not inventoryData[name] then
+                                inventoryData[name] = { count = 0 }
                             end
+                            inventoryData[name].count = math.max(inventoryData[name].count, realCount)
                         end
                     end
-                end
+                end)
 
-                -- Cek Hotbar / UI Game (Mendeteksi teks item seperti Sekop, Biji Stroberi, Biji Wortel di layar)
-                local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
-                if playerGui then
-                    for _, gui in ipairs(playerGui:GetDescendants()) do
-                        if gui:IsA("TextLabel") or gui:IsA("TextButton") then
-                            local txt = gui.Text
-                            if txt and (txt:find("Biji") or txt:find("Sekop") or txt:find("Bangun") or txt:find("Wortel") or txt:find("Stroberi")) then
-                                if #txt < 30 and not txt:find("Status") and not txt:find("Taman") then
-                                    inventoryData[txt] = { count = 1 }
+                -- Scan Karakter (Tool yang sedang dipegang)
+                pcall(function()
+                    local character = LocalPlayer.Character
+                    if character then
+                        for _, item in ipairs(character:GetChildren()) do
+                            if item:IsA("Tool") then
+                                local name = item.Name
+                                local realCount = getItemCount(item)
+                                if not inventoryData[name] then
+                                    inventoryData[name] = { count = 0 }
                                 end
+                                inventoryData[name].count = math.max(inventoryData[name].count, realCount)
                             end
                         end
                     end
-                end
+                end)
                 
-                -- Kirim data terupdate ke Cloud (disesuaikan dengan properti 'shekles' dan 'items' di web)
                 currentAccounts[AccountKey] = {
                     LastUpdate = os.time(),
                     shekles = sheklesValue,
                     items = inventoryData,
-                    metrics = { fps = 60, ping = 50 }
+                    metrics = { fps = 60, ping = 45 }
                 }
             end
             
             httpRequest({
                 Url = URL,
                 Method = "PUT",
-                Headers = {
-                    ["Content-Type"] = "application/json",
-                    ["X-Master-Key"] = API_KEY
-                },
-                Body = HttpService:JSONEncode({ 
-                    accounts = currentAccounts,
-                    commands = currentCommands 
-                })
+                Headers = { ["Content-Type"] = "application/json", ["X-Master-Key"] = API_KEY },
+                Body = HttpService:JSONEncode({ accounts = currentAccounts, commands = currentCommands })
             })
+            
+            if not isRemove then
+                StatusLabel.Text = "Terupdate: " .. os.date("%H:%M:%S")
+            else
+                StatusLabel.Text = "Status: Data Dihapus"
+            end
         end)
     end)
 end
 
--- === KONTROL TOMBOL GUI ===
+-- Tombol Close (X)
 CloseBtn.MouseButton1Click:Connect(function()
-    updateCloud(true) 
+    sendDataToCloud(true)
+    task.wait(0.5)
     ScreenGui:Destroy()
 end)
 
+-- Tombol Minimize (-)
 local isMinimized = false
 MinBtn.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
@@ -237,21 +246,21 @@ ToggleBtn.MouseButton1Click:Connect(function()
     if isSyncActive then
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(34, 197, 94)
         ToggleBtn.Text = "Status: AKTIF (ON)"
-        StatusLabel.Text = "Status: Terhubung"
-        updateCloud(false)
+        sendDataToCloud(false)
     else
         ToggleBtn.BackgroundColor3 = Color3.fromRGB(239, 68, 68)
         ToggleBtn.Text = "Status: MATI (OFF)"
-        StatusLabel.Text = "Status: Dijeda"
+        sendDataToCloud(true)
     end
 end)
 
--- Auto-sync otomatis setiap 5 detik
+-- Eksekusi awal & Loop Real-Time Setiap 1 Detik
+sendDataToCloud(false)
 task.spawn(function()
     while true do
         if isSyncActive then
-            updateCloud(false)
+            sendDataToCloud(false)
         end
-        task.wait(5)
+        task.wait(1)
     end
 end)
